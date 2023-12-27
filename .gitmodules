@@ -1,0 +1,7 @@
+[submodule "external/Unity"]
+	path = external/Unity
+	url = git@github.com:ThrowTheSwitch/Unity.git
+[submodule "external/littlefs"]
+	path = external/littlefs
+	url = git@github.com:littlefs-project/littlefs.git
+	branch = v2.8.2
