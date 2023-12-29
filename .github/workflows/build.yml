@@ -42,7 +42,10 @@ jobs:
         path: fw
 
     - name: DEBUG - show working dir
-      run: ls -la
+      run: |
+        ls -la
+        ls -la fw
+        pwd
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
