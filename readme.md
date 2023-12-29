@@ -20,6 +20,7 @@ Files:
 * `commands_pib.c` - commands from PIB
 * `filesystem.c` - interface between flash and LittleFS filesystem
 * `scheduler.c` - schedules tasks
+* `openlst.c` - openlst UART driver
 
 ## Unit Tests
 
@@ -33,7 +34,11 @@ make
 ./tests
 ```
 
-To add a new unit test, make a new file in `test` starting with `test_` (ie, `test/test_commands.c`), then in `test/main.c` add an include for the file and add the test function to `int main()`.
+To add a new unit test:
+
+* Write the test in a file starting with `test_` in the `test` directory (ex: `test/test_commands.c`)
+* In `test/CMakeLists.txt`, add the .c file to the `add_executables` function, with all the other unit test files
+* In `test/main.c`, add a function declaration for the test function at the top and then call the function with `RUN_TEST(test_function)`
 
 ## Development
 

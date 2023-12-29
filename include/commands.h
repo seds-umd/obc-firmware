@@ -59,6 +59,5 @@ int command_process(uint8_t *buf, int len);
 /**
  * @brief Print all opcodes that have valid handlers
  * 
- * @return int 
  */
-int command_debug_print_opcodes();
+void command_debug_print_opcodes();

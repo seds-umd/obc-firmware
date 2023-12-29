@@ -73,7 +73,7 @@ int command_process(uint8_t *buf, int len) {
     return (*handler)(buf, len);
 }
 
-int command_debug_print_opcodes() {
+void command_debug_print_opcodes() {
     for (int i=0; i<COMMANDS_MAX_ENTRIES; i++) {
         if (command_table[i].handler != NULL) {
             printf("Command found at opcode %#02x\n", i);

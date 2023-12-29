@@ -1,6 +1,7 @@
 #include "unity.h"
 
 #include "commands.h"
+#include "macros.h"
 
 void setUp() {
     command_init();
@@ -12,12 +13,16 @@ int count1 = 0;
 int count2 = 0;
 
 int command1(uint8_t *buf, int len) {
+    UNUSED(len);
+
     count1++;
 
     return (int8_t) buf[1];
 }
 
 int command2(uint8_t *buf, int len) {
+    UNUSED(len);
+
     count2++;
 
     return (int8_t) buf[1];
