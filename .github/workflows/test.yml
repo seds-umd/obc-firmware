@@ -1,0 +1,40 @@
+name: Run unit tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt upgrade
+        sudo apt -y install cmake build-essential
+
+    - name: Checkout obc-firmware
+      uses: actions/checkout@v3
+      with:
+        repository: ${{github.repository}}
+        path: fw
+    
+    - name: Checkout obc-firmware submodules
+      working-directory: fw
+      run: git submodule update --init --recursive
+
+    - name: Configure CMake
+      working-directory: fw/test
+      run: cmake -B ${{github.workspace}}/fw/test/build
+  
+    - name: Build
+      working-directory: fw/test
+      run: cmake --build ${{github.workspace}}/fw/test/build
+  
+    - name: Test
+      working-directory: fw/test
+      run: ./build/tests
