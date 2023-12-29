@@ -18,6 +18,7 @@ include_directories(
 
 add_executable(obc_fw
     # Internal source files
+    src/commands.c
     src/main.c
 
     # External source files
@@ -37,9 +38,9 @@ add_compile_definitions(
 
 # Turn on basically all useful warnings
 # (if this is a problem we can turn some off later)
-add_compile_options(
+target_compile_options(obc_fw PUBLIC
     -Wall
     -Wextra
-    -Wpedantic
-    -fanalyzer
 )
+
+install(CODE "execute_process(COMMAND echo TODO: command to upload)")
