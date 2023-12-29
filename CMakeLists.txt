@@ -20,6 +20,7 @@ add_executable(obc_fw
     # Internal source files
     src/commands.c
     src/main.c
+    src/scheduler.c
 
     # External source files
     external/littlefs/lfs.c

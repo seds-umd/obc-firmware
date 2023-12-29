@@ -3,12 +3,6 @@
 #include "commands.h"
 #include "macros.h"
 
-void setUp() {
-    command_init();
-}
-
-void tearDown() {}
-
 int count1 = 0;
 int count2 = 0;
 
@@ -29,6 +23,8 @@ int command2(uint8_t *buf, int len) {
 }
 
 void test_commands() {
+    command_init();
+
     // Register commands and make sure they can only be registered once
     TEST_ASSERT_EQUAL_INT(0, command_register(0x01, command1));
     TEST_ASSERT_EQUAL_INT(2, command_register(0x01, command1));
