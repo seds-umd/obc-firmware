@@ -11,7 +11,7 @@ int command1(uint8_t *buf, int len) {
 
     count1++;
 
-    return (int8_t) buf[1];
+    return (int8_t)buf[1];
 }
 
 int command2(uint8_t *buf, int len) {
@@ -19,7 +19,7 @@ int command2(uint8_t *buf, int len) {
 
     count2++;
 
-    return (int8_t) buf[1];
+    return (int8_t)buf[1];
 }
 
 void test_commands() {

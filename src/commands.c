@@ -16,7 +16,7 @@ static command_entry_t command_table[COMMANDS_MAX_ENTRIES];
 
 void command_init() {
     // Make sure all handlers are initialized to NULL
-    for (int i=0; i<COMMANDS_MAX_ENTRIES; i++) {
+    for (int i = 0; i < COMMANDS_MAX_ENTRIES; i++) {
         command_table[i].handler = NULL;
     }
 }
@@ -69,12 +69,12 @@ int command_process(uint8_t *buf, int len) {
         return 2;
     }
 
-    // Run command and 
+    // Run command and return it's return value
     return (*handler)(buf, len);
 }
 
 void command_debug_print_opcodes() {
-    for (int i=0; i<COMMANDS_MAX_ENTRIES; i++) {
+    for (int i = 0; i < COMMANDS_MAX_ENTRIES; i++) {
         if (command_table[i].handler != NULL) {
             printf("Command found at opcode %#02x\n", i);
         }

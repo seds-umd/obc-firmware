@@ -18,7 +18,7 @@ int scheduler_init() {
         return 1;
     }
 
-    for (int i=0; i<SCHEDULER_MAX_TASKS; i++) {
+    for (int i = 0; i < SCHEDULER_MAX_TASKS; i++) {
         // Clear task, don't bother with other fields
         task_table[i].task = NULL;
     }
@@ -27,7 +27,7 @@ int scheduler_init() {
 }
 
 int scheduler_add_task(void (*task)(), uint64_t period) {
-    for (int i=0; i<SCHEDULER_MAX_TASKS; i++) {
+    for (int i = 0; i < SCHEDULER_MAX_TASKS; i++) {
         if (task_table[i].task == NULL) {
             task_table[i].task = task;
             task_table[i].period = period;
@@ -46,7 +46,7 @@ int scheduler_add_task(void (*task)(), uint64_t period) {
 int scheduler_run() {
     // TODO: is it best to restart the loop when a task is run?
 
-    for (int i=0; i<SCHEDULER_MAX_TASKS; i++) {
+    for (int i = 0; i < SCHEDULER_MAX_TASKS; i++) {
         // Skip if task doesn't exist
         if (task_table[i].task == NULL) {
             continue;

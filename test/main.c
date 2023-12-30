@@ -5,11 +5,9 @@ void test_commands();
 void test_scheduler();
 
 // Empty setup and teardown so compiler doesn't get mad
-void setUp() {
-}
+void setUp() {}
 
-void tearDown() {
-}
+void tearDown() {}
 
 int main(void) {
     UNITY_BEGIN();
