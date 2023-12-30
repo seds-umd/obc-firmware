@@ -3,8 +3,7 @@
 #include "commands.h"
 #include "macros.h"
 
-int count1 = 0;
-int count2 = 0;
+static int count1, count2;
 
 int command1(uint8_t *buf, int len) {
     UNUSED(len);
@@ -23,6 +22,9 @@ int command2(uint8_t *buf, int len) {
 }
 
 void test_commands() {
+    count1 = 0;
+    count2 = 0;
+
     command_init();
 
     // Register commands and make sure they can only be registered once

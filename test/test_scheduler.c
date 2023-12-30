@@ -3,7 +3,7 @@
 #include "pico/time.h"
 #include "scheduler.h"
 
-int count1, count2, count3;
+static int count1, count2, count3;
 
 void task1() { count1++; }
 
