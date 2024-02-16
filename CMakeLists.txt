@@ -20,6 +20,7 @@ add_executable(obc_fw
     # Internal source files
     src/commands.c
     src/main.c
+    src/openlst.c
     src/scheduler.c
 
     # External source files
@@ -42,6 +43,11 @@ add_compile_definitions(
 target_compile_options(obc_fw PUBLIC
     -Wall
     -Wextra
+    -fstack-usage
 )
 
-install(CODE "execute_process(COMMAND echo TODO: command to upload)")
+pico_add_extra_outputs(obc_fw)
+
+install(CODE "execute_process(
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program ${CMAKE_PROJECT_NAME}.elf verify reset exit\"
+)")

@@ -19,13 +19,19 @@ include_directories(
 add_executable(tests
     # Add new sources files here
     ../src/commands.c
+    ../src/openlst.c
     ../src/scheduler.c
 
+    # Test infrastructure
+    hardware/uart.c
     main.c
     globals.c
-    # Add files containing tests here:
+
+    # Test files
     test_commands.c
+    test_openlst.c
     test_scheduler.c
+    test_uart.c
 
     # Don't add src/main.c because it will conflict with test/main.c
 )
@@ -38,7 +44,6 @@ target_link_libraries(tests unity)
 target_compile_options(tests PRIVATE
     -Wall
     -Wextra
-    -Wpedantic
     -ggdb3
     # -fanalyzer # Not available on GCC 9
 )
