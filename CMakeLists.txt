@@ -18,7 +18,7 @@ include_directories(
 
 add_executable(obc_fw
     # Internal source files
-    src/commands.c
+    src/command_handler.c
     src/main.c
     src/openlst.c
     src/scheduler.c
@@ -30,7 +30,10 @@ add_executable(obc_fw
 pico_enable_stdio_usb(obc_fw 1)
 
 target_link_libraries(obc_fw
+    pico_multicore
     pico_stdlib
+    pico_rand
+    hardware_dma
     hardware_spi
 )
 
