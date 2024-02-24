@@ -1,5 +1,7 @@
 #pragma once
 
+#include "command_formats.h"
+
 #include <stdint.h>
 
 #define COMMANDS_MAX_ENTRIES UINT8_MAX + 1
@@ -26,7 +28,7 @@ void command_init();
  * @param handler Pointer to command handler function
  * @return int
  */
-int command_register(int opcode, int (*handler)(uint8_t *buf, int len));
+int command_register(int opcode, int (*handler)(packet_t *pkt));
 
 /**
  * @brief Remove a command after registering it.
@@ -54,7 +56,7 @@ int command_remove(int opcode);
  * @param len
  * @return int
  */
-int command_process(uint8_t *buf, int len);
+int command_process(packet_t *pkt);
 
 /**
  * @brief Print all opcodes that have valid handlers

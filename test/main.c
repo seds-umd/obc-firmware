@@ -2,6 +2,7 @@
 
 // Add function declarations here for every test
 void test_uart();
+void test_queue();
 void test_commands();
 void test_scheduler();
 void test_openlst();
@@ -16,6 +17,7 @@ int main(void) {
 
     // Unit tests for test infrastructure
     RUN_TEST(test_uart);
+    RUN_TEST(test_queue);
 
     // Unit tests for actual firmware
     RUN_TEST(test_commands);

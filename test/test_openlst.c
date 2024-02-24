@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "commands.h"
+#include "command_handler.h"
 #include "command_formats.h"
 #include "openlst.h"
 #include "hardware/uart.h"
@@ -14,18 +14,18 @@
 
 static int sum1, sum2, count1, count2;
 
-static int command1(uint8_t *buf, int len) {
-    for (int i=1; i<len; i++) {
-        sum1 += buf[i];
+static int command1(packet_t *pkt) {
+    for (int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+        sum1 += pkt->lst_pkt->pld.buf[i];
         count1++;
     }
 
     return 0;
 }
 
-static int command2(uint8_t *buf, int len) {
-    for (int i=1; i<len; i++) {
-        sum2 += buf[i];
+static int command2(packet_t *pkt) {
+    for (int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+        sum2 += pkt->lst_pkt->pld.buf[i];
         count2++;
     }
 
@@ -60,7 +60,7 @@ void test_openlst() {
     srand(seed);
 
     // Log seed so failures can be repeated
-    printf("Running OpenLST handler test with seed %d\n", seed);
+    printf("Running OpenLST RX handler test with seed %d\n", seed);
 
     sum1 = 0;
     sum2 = 0;

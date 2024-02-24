@@ -1,5 +1,7 @@
 #include "command_handler.h"
 
+#include "command_formats.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +9,7 @@
 // A struct isn't really necessary when the handler is the only thing we're
 // using, but it adds no performance overhead and might be useful later.
 typedef struct {
-    int (*handler)(uint8_t *buf, int len);
+    int (*handler)(packet_t *pkt);
     // TODO: do we want a pointer for context data to be passed to the handler?
 } command_entry_t;
 
@@ -21,7 +23,7 @@ void command_init() {
     }
 }
 
-int command_register(int opcode, int (*handler)(uint8_t *buf, int len)) {
+int command_register(int opcode, int (*handler)(packet_t *pkt)) {
     if ((opcode >= COMMANDS_MAX_ENTRIES) || (opcode < 0)) {
         // Opcode out of range
         return 1;
@@ -55,14 +57,29 @@ int command_remove(int opcode) {
     return 0;
 }
 
-int command_process(uint8_t *buf, int len) {
+int command_process(packet_t *pkt) {
+    int len;
+    uint8_t *buf;
+
+    if (pkt == NULL) {
+        // Packet is invalid
+        return 1;
+    }
+
+    if (pkt->type == PACKET_TYPE_OPENLST) {
+        buf = pkt->lst_pkt->pld.buf;
+        len = pkt->lst_pkt->len - OPENLST_HEADER_SIZE;
+    } else {
+        // TODO
+    }
+
     if ((len == 0) || (buf == NULL)) {
         // Buffer is invalid
         return 1;
     }
 
     uint8_t opcode = buf[0];
-    int (*handler)(uint8_t *buf, int len) = command_table[opcode].handler;
+    int (*handler)(packet_t *pkt) = command_table[opcode].handler;
 
     if (handler == NULL) {
         // Command handler doesn't exist
@@ -70,7 +87,7 @@ int command_process(uint8_t *buf, int len) {
     }
 
     // Run command and return it's return value
-    return (*handler)(buf, len);
+    return (*handler)(pkt);
 }
 
 void command_debug_print_opcodes() {

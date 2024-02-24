@@ -18,6 +18,7 @@ include_directories(
 
 add_executable(obc_fw
     # Internal source files
+    src/commands.c
     src/command_handler.c
     src/main.c
     src/openlst.c

@@ -1,6 +1,6 @@
 # Ground Commands
 
-This document defines the structure of transactions between the OBC and the ground station through the OpenLST. Both command uplink and status/telemetry downlink will follow this format.
+This document defines the structure of transactions between the OBC and the ground station through the OpenLST. Both command uplink and status/telemetry downlink will follow this format. The commands are the same whether sent through the OpenLST or sent directly to the OBC.
 
 ## Format
 
@@ -17,37 +17,31 @@ Ground commands will start with a command opcode byte which will dictate the for
 * 0xA0-0xBF - driver access
 * 0xC0-0xFF - reserved for future access to internals
 
-| Hex | Opcode | Firmware Status | Python Status |
-| - | - | - | - |
-| 0x00 | ACK | TODO | TODO |
-| 0x01 | PING | TODO | TODO |
-| 0x80 | GPIO | TODO | TODO |
-| 0x81 | UART_CFG | TODO | TODO |
-| 0x82 | UART_DATA | TODO | TODO |
-| xxx | SPI_CFG | TODO | TODO |
-| xxx | SPI_DATA | TODO | TODO |
-| xxx | GPIO_CFG | TODO | TODO |
-
+| Hex  | Opcode | Firmware Status | Python Status |
+| ---- | ------ | --------------- | ------------- |
+| 0x00 | ACK    | TODO            | TODO          |
+| 0x01 | PING   | TODO            | TODO          |
+| 0x80 | GPIO   | TODO            | TODO          |
 
 
 ## Commands
 
 ### 0x00 - ACK
 
-| Field | Size |
-| - | - |
-| OPCODE | 1 |
-| NACK | 1 |
+| Field  | Size |
+| ------ | ---- |
+| OPCODE | 1    |
+| NACK   | 1    |
 
 If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is sent after a command is successful and NACK if unsuccessful.
 
 ### 0x01 - PING
 
-| Field | Size |
-| - | - |
-| OPCODE | 1 |
+| Field  | Size |
+| ------ | ---- |
+| OPCODE | 1    |
 
-If a ping is received, the receiver will respond with an ACK message that has the same sequence ID.
+If a ping is received, the receiver will respond with an ACK message that has the same sequence ID. The rest of contents of the message will be repeated with no changes.
 
 ### 0x80 - GPIO
 

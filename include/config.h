@@ -10,10 +10,8 @@
 #define OPENLST_UART_ID uart0
 #define OPENLST_UART_IRQ UART0_IRQ
 #define OPENLST_UART_BAUD 115200
-// #define OPENLST_UART_TX 12
-// #define OPENLST_UART_RX 13
-#define OPENLST_UART_TX 16
-#define OPENLST_UART_RX 17
+#define OPENLST_UART_TX 12
+#define OPENLST_UART_RX 13
 #define OPENLST_UART_CTS 14
 #define OPENLST_UART_RTS 15
 
@@ -21,7 +19,10 @@
 #define OPENLST_FLOW false
 
 // Buffer size must be a power of 2
-#define OPENLST_BUF_LEN 1024
+#define OPENLST_RX_BUF_LEN 1024
+
+// TX buffer count must be <=32 because status is stored as uint32_t bitmask
+#define OPENLST_TX_BUF_COUNT 4
 
 ////////// PINOUTS //////////
 

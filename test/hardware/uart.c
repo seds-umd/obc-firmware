@@ -2,7 +2,7 @@
 
 #include "unity.h"
 #include "misc.h"
-#include <assert.h>
+// #include <assert.h>
 #include <stdlib.h>
 
 static uint8_t *rx_buf;
