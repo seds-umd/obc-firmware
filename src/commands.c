@@ -1,6 +1,7 @@
 #include "commands.h"
 
 #include "command_handler.h"
+#include "logging.h"
 #include "openlst.h"
 
 #include <string.h>

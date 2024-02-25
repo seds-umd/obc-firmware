@@ -20,6 +20,7 @@ add_executable(obc_fw
     # Internal source files
     src/commands.c
     src/command_handler.c
+    src/logging.c
     src/main.c
     src/openlst.c
     src/scheduler.c

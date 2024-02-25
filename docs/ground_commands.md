@@ -21,8 +21,8 @@ Ground commands will start with a command opcode byte which will dictate the for
 | ---- | ------ | --------------- | ------------- |
 | 0x00 | ACK    | TODO            | TODO          |
 | 0x01 | PING   | TODO            | TODO          |
+| 0x02 | MSG    | TODO            | TODO          |
 | 0x80 | GPIO   | TODO            | TODO          |
-
 
 ## Commands
 
@@ -42,6 +42,10 @@ If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is 
 | OPCODE | 1    |
 
 If a ping is received, the receiver will respond with an ACK message that has the same sequence ID. The rest of contents of the message will be repeated with no changes.
+
+### 0x02 - MSG
+
+Contains an ASCII message intended to be read by humans, such as errors, warnings, or log messages.
 
 ### 0x80 - GPIO
 

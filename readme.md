@@ -7,6 +7,7 @@ Directories:
 * build - build artifacts, generated locally and not committed to git
 * external - git submodules for any external code
 * include - header files (.h)
+* obc_tools - python tools for talking to firmware
 * src - source files (.c)
 * test - unit tests written using [Unity](https://github.com/ThrowTheSwitch/Unity)
 
@@ -47,3 +48,12 @@ To add a new unit test:
 Things to keep in mind:
 
 * When adding a new source file, make sure it's added to `CMakeLists.txt`, and if you want to use it in unit tests, `test/CMakeLists.txt` as well
+
+## Python Interface
+
+Setup
+
+```bash
+python3 -m venv venv
+pip install -r requirements.txt
+```
