@@ -1,5 +1,6 @@
 #include "hardware/gpio.h"
 #include "pico/rand.h"
+#include "pico/stdlib.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -12,26 +13,32 @@
 #include "openlst.h"
 
 void send_packets() {
-    char *s = "hello";
+    char *s = "hello there\r\n";
 
     openlst_packet_t *pkt;
 
-    do {
-        pkt = openlst_get_tx_buffer();
-    } while (pkt == NULL);
+    for (int i=0; i<5; i++) {
+        do {
+            pkt = openlst_get_tx_buffer();
+        } while (pkt == NULL);
 
-    pkt->len = 5 + OPENLST_HEADER_SIZE;
-    memcpy(pkt->pld.buf, s, 5);
+        pkt->len = 13 + OPENLST_HEADER_SIZE;
+        memcpy(pkt->pld.buf, s, 13);
 
-    openlst_tx(pkt);
+        openlst_tx(pkt);
+    }
 }
 
 int main() {
+    // Debug only, for printf
+    stdio_init_all();
+    sleep_ms(1000);
+
     // First run of PRNG takes longer than normal because it has to generate a
     // seed so we run this first to get it out of the way.
     get_rand_32();
 
-    printf("Hello\n");
+    printf("\n\nbooted\n");
 
     gpio_init(DEBUG_PIN);
     gpio_set_dir(DEBUG_PIN, true);
@@ -49,6 +56,6 @@ int main() {
     command_setup();
 
     while (1) {
-        scheduler_run();
+        int i = scheduler_run();
     }
 }

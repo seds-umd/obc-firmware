@@ -89,8 +89,8 @@ void openlst_init() {
     dma_channel_configure(
         tx_dma_chan,
         &dma_cfg,
-        NULL, // No read address yet
         &uart_get_hw(OPENLST_UART_ID)->dr, // Write to UART DR
+        NULL, // No read address yet
         0, // Unknown transfer size
         false // Don't start yet
     );
@@ -242,18 +242,21 @@ int openlst_tx(openlst_packet_t *pkt) {
     // Mark buffer as in use until packet is sent
     tx_buf_status &= (1 << pkt_idx);
 
-    // If DMA isn't active, start transfer
+    // Add packet to queue
+    queue_add_blocking(&tx_buf_queue, &pkt_idx);
+
+    // Start transfer if DMA is currently idle
     if (!dma_channel_is_busy(tx_dma_chan)) {
         openlst_tx_dma(pkt_idx);
     }
-
-    // Otherwise add to queue and exit
-    queue_add_blocking(&tx_buf_queue, &pkt_idx);
 
     return 0;
 }
 
 void openlst_dma_isr() {
+    // Clear request
+    dma_hw->ints0 = 1 << tx_dma_chan;
+
     int pkt;
 
     // Remove packet that just completed
