@@ -16,7 +16,17 @@
 
 ////////// Ground Commands //////////
 
-// typedef struct {};
+typedef union {
+    struct {
+        uint32_t pin;
+        uint8_t pin_op;
+    } gpio;
+
+    struct {
+        uint32_t pin_mode;
+        uint32_t pin_state;
+    } gpio_state;
+} command_t;
 
 ////////// OpenLST Packets //////////
 
@@ -59,6 +69,10 @@ typedef union {
     // TODO
 
     // Ground commands
+    struct {
+        uint8_t opcode;
+        command_t msg;
+    } gnd_cmd;
 } openlst_packet_payload_t;
 
 /// @brief OpenLST packet structure

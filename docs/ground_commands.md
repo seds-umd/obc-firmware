@@ -17,12 +17,16 @@ Ground commands will start with a command opcode byte which will dictate the for
 * 0xA0-0xBF - driver access
 * 0xC0-0xFF - reserved for future access to internals
 
-| Hex  | Opcode | Firmware Status | Python Status |
-| ---- | ------ | --------------- | ------------- |
-| 0x00 | ACK    | TODO            | TODO          |
-| 0x01 | PING   | TODO            | TODO          |
-| 0x02 | MSG    | TODO            | TODO          |
-| 0x80 | GPIO   | TODO            | TODO          |
+| Hex  | Opcode     | Firmware Status | Python Status | Testing |
+|------|------------|-----------------|---------------|---------|
+| 0x00 | ACK        | TODO            | TODO          | TODO    |
+| 0x01 | PING       | Done            | Done          | Working |
+| 0x02 | MSG        | Done            | Done          | Working |
+| 0x03 | REBOOT     | Done            | Done          | Working |
+| 0x80 | GPIO       | TODO            | TODO          | TODO    |
+| 0x81 | GPIO_STATE | TODO            | TODO          | TODO    |
+
+All multi byte fields have the least significant byte first, ie little endian if bytes are transmitted in the order they appear in memory.
 
 ## Commands
 
@@ -45,14 +49,58 @@ If a ping is received, the receiver will respond with an ACK message that has th
 
 ### 0x02 - MSG
 
+| Field   | Size |
+|---------|------|
+| OPCODE  | 1    |
+| LEVEL   | 1    |
+| MESSAGE | N    |
+
 Contains an ASCII message intended to be read by humans, such as errors, warnings, or log messages.
+
+TODO: implement different log levels
+
+### 0x03 - REBOOT
+
+| Field   | Size |
+|---------|------|
+| OPCODE  | 1    |
+
+Reboots OBC immediately.
+
+TODO: would it be useful to add a delay?
 
 ### 0x80 - GPIO
 
-| Field | Size |
-| - | - |
-| OPCODE | 1 |
-| PIN | 1 |
-| 
+| Field  | Size |
+|--------|------|
+| OPCODE | 1    |
+| PIN    | 4    |
+| PIN_OP | 1    |
 
-### 0x81 - ADC
+PIN - bitmask of pins to apply operation to. Pin 0 is the LSB of the first byte, 31 is MSB of last byte.
+
+PIN_OP
+
+* 0x00 - Set pin function to null
+* 0x01 - Set pin function to GPIO (calls init function so pin will also be set as input)
+* 0x02 - Set pin mode to input
+* 0x03 - Set pin mode to output
+* 0x04 - Set pin high
+* 0x05 - Set pin low
+* 0xFF - Read pin state (will return GPIO_STATE message)
+
+### 0x81 - GPIO_STATE
+
+| Field     | Size |
+|-----------|------|
+| OPCODE    | 1    |
+| PIN_MODE  | 4    |
+| PIN_STATE | 4    |
+
+GPIO_STATE is only to be returned in response to certain GPIO commands. The OBC will ignore any GPIO_STATE packets it receives.
+
+PIN_MODE contains the state of each pin. For each pin, a 1 represents output and 0 input.
+
+PIN_STATE is the actual state of the pin, regardless of whether it's an input or an output (I think, the datasheet doesn't actually specifically say this).
+
+### 0x82 - ADC

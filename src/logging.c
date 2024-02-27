@@ -1,4 +1,8 @@
+#include "logging.h"
+
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include "openlst.h"
 #include "command_formats.h"
@@ -19,4 +23,17 @@ void log_msg(const char *msg) {
     pkt->hdr.seq = openlst_get_seq();
 
     openlst_tx(pkt);
+}
+
+int log_fmt(const char *format, ...) {
+    char buf[250];
+
+    va_list va;
+    va_start(va, format);
+    const int ret = vsnprintf(buf, 250, format, va);
+    va_end(va);
+
+    log_msg(buf);
+
+    return ret;
 }

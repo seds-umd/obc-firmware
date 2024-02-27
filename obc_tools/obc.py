@@ -15,18 +15,37 @@ OBC shell
 
 Commands can be accessed through the `obc` object
 
-Ex: `obc.reboot()`"""
+Ex: `obc.ping()`"""
 
 class Obc(LstHandler):
     def __init__(self, port: str, hwid: int, baud: int = 115200, rtscts: bool = False, timeout: float = 1) -> None:
         super().__init__(port, hwid, baud, rtscts, timeout)
 
-    def ping(self, msg: bytes = bytes()):
-        msg = [ObcCmds.PING] + list(msg)
-        msg = bytes(msg)
+    def obc_cmd(self, opcode: int, msg: bytes = bytes(), resp: bool = False):
+        # Send command in OBC command format, returns response or sequence
+        # number if response not expected
+
+        assert opcode >= 0 and opcode < 256, "Command opcode invalid"
+
+        msg = bytes([opcode] + list(msg))
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
 
-        return self.get_packet_timeout(seqnum=seq)
+        if resp:
+            return self.get_packet_timeout(seqnum=seq)
+        else:
+            return seq
+
+    def ping(self, msg: bytes = bytes()):
+        return self.obc_cmd(ObcCmds.PING, msg, True)
+
+    def reboot(self) -> int:
+        return self.obc_cmd(ObcCmds.REBOOT)
+
+    def gpio_get_all(self) -> int:
+        reply = self.obc_cmd(ObcCmds.GPIO, bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF]))
+
+    def gpio_get(self, pin) -> bool:
+        pass
 
 if __name__ == "__main__":
     import click

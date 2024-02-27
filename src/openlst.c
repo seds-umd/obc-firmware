@@ -210,6 +210,11 @@ openlst_packet_t *openlst_get_tx_buffer() {
         // No free buffers
         return NULL;
     } else {
+        // Use some reasonable defaults
+        tx_buf[i].hdr.hwid = 0x0000;
+        tx_buf[i].hdr.system = 0x01;
+        tx_buf[i].hdr.command = ASCII;
+
         return &tx_buf[i];
     }
 }

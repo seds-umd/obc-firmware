@@ -8,7 +8,6 @@
 
 /**
  * @brief Initialize command handler.
- *
  */
 void command_init();
 
@@ -60,6 +59,5 @@ int command_process(packet_t *pkt);
 
 /**
  * @brief Print all opcodes that have valid handlers
- *
  */
 void command_debug_print_opcodes();

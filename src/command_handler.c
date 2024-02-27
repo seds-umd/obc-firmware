@@ -58,8 +58,8 @@ int command_remove(int opcode) {
 }
 
 int command_process(packet_t *pkt) {
-    int len;
-    uint8_t *buf;
+    int len = -1;
+    uint8_t *buf = NULL;
 
     if (pkt == NULL) {
         // Packet is invalid
