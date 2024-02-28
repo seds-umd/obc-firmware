@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "command_formats.h"
+
+#include <stdint.h>
 
 // Initialize OpenLST command processor
 /**

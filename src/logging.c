@@ -1,11 +1,11 @@
 #include "logging.h"
 
-#include <string.h>
+#include "command_formats.h"
+#include "openlst.h"
+
 #include <stdarg.h>
 #include <stdio.h>
-
-#include "openlst.h"
-#include "command_formats.h"
+#include <string.h>
 
 void log_msg(const char *msg) {
     openlst_packet_t *pkt;

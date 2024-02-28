@@ -2,13 +2,13 @@
 
 #include "command_handler.h"
 #include "logging.h"
-#include "openlst.h"
 #include "macros.h"
-
-#include <string.h>
+#include "openlst.h"
 
 #include "hardware/gpio.h"
 #include "hardware/watchdog.h"
+
+#include <string.h>
 
 // Functions are declared as static because they should only ever be called
 // by the command handler.
@@ -60,7 +60,7 @@ static int command_gpio(packet_t *pkt) {
     uint32_t pins = pkt->lst_pkt->pld.gnd_cmd.msg.gpio.pin;
 
     // Functions without bitmask support
-    for (int i=0; i<32; i++) {
+    for (int i = 0; i < 32; i++) {
         if ((pins >> i) & 0x1) {
             switch (op) {
                 case 0x00:
@@ -79,19 +79,19 @@ static int command_gpio(packet_t *pkt) {
 
     // Functions with bitmask support
     switch (op) {
-        case 0x02: // input
+        case 0x02:  // input
             gpio_set_dir_in_masked(pins);
             break;
-        case 0x03: // output
+        case 0x03:  // output
             gpio_set_dir_out_masked(pins);
             break;
-        case 0x04: // high
+        case 0x04:  // high
             gpio_put_masked(pins, 0xFFFFFFFF);
             break;
-        case 0x05: // low
+        case 0x05:  // low
             gpio_put_masked(pins, 0x00000000);
             break;
-        case 0xFF: // read
+        case 0xFF:  // read
             reply = openlst_get_tx_buffer();
 
             reply->hdr.hwid = 0x0000;
@@ -100,7 +100,7 @@ static int command_gpio(packet_t *pkt) {
             reply->hdr.command = ASCII;
             reply->len = 5;
 
-            reply->pld.gnd_cmd.opcode = 0x81; // GPIO_STATE command
+            reply->pld.gnd_cmd.opcode = 0x81;  // GPIO_STATE command
             reply->pld.gnd_cmd.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
             reply->pld.gnd_cmd.msg.gpio_state.pin_state = sio_hw->gpio_in;
 

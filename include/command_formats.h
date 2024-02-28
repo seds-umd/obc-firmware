@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <stdint.h>
+
 // Pack all structs into bytes
 #pragma pack(1)
-
-#include <stdint.h>
 
 // Maximum size of an OpenLST packet, not including start bytes or size bytes
 #define OPENLST_MAX_PAYLOAD 251

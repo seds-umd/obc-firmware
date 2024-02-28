@@ -1,9 +1,10 @@
+#include "scheduler.h"
+
+#include "config.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include "pico/time.h"
-
-#include "config.h"
-#include "scheduler.h"
 
 typedef struct {
     void (*task)();

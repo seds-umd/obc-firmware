@@ -1,5 +1,10 @@
 #include "openlst.h"
 
+#include "command_handler.h"
+#include "command_formats.h"
+#include "config.h"
+#include "macros.h"
+
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
@@ -8,15 +13,10 @@
 #include "pico/time.h"
 #include "pico/util/queue.h"
 
-#include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "config.h"
-#include "command_handler.h"
-#include "command_formats.h"
-#include "macros.h"
+#include <string.h>
 
 // RX buffer
 static uint8_t rx_buf[OPENLST_RX_BUF_LEN];
@@ -39,7 +39,7 @@ static int tx_dma_chan;
 static uint16_t tx_seq;
 
 static uint16_t rx_buffer_len() {
-    return ((uint16_t) (rx_buf_wr - rx_buf_rd)) % OPENLST_RX_BUF_LEN;
+    return ((uint16_t)(rx_buf_wr - rx_buf_rd)) % OPENLST_RX_BUF_LEN;
 }
 
 void openlst_init() {
@@ -78,21 +78,20 @@ void openlst_init() {
     queue_init(&tx_buf_queue, sizeof(int), OPENLST_TX_BUF_COUNT);
 
     // TX DMA
-    tx_dma_chan = dma_claim_unused_channel(true); // TODO: handle error
+    tx_dma_chan = dma_claim_unused_channel(true);  // TODO: handle error
     dma_channel_config dma_cfg = dma_channel_get_default_config(tx_dma_chan);
     channel_config_set_transfer_data_size(&dma_cfg, DMA_SIZE_8);
     channel_config_set_write_increment(&dma_cfg, false);
     channel_config_set_read_increment(&dma_cfg, true);
-    channel_config_set_dreq(&dma_cfg, (OPENLST_UART_ID == uart0) ? 
-                            DREQ_UART0_TX : DREQ_UART1_TX);
+    channel_config_set_dreq(
+        &dma_cfg, (OPENLST_UART_ID == uart0) ? DREQ_UART0_TX : DREQ_UART1_TX);
 
     dma_channel_configure(
-        tx_dma_chan,
-        &dma_cfg,
-        &uart_get_hw(OPENLST_UART_ID)->dr, // Write to UART DR
-        NULL, // No read address yet
-        0, // Unknown transfer size
-        false // Don't start yet
+        tx_dma_chan, &dma_cfg,
+        &uart_get_hw(OPENLST_UART_ID)->dr,  // Write to UART DR
+        NULL,                               // No read address yet
+        0,                                  // Unknown transfer size
+        false                               // Don't start yet
     );
 
     // DMA IRQ
@@ -123,7 +122,7 @@ void openlst_process() {
 
         // Loop until start bytes are found or we run out of bytes
         while (1) {
-            consumed = ((uint16_t) (rx_buf_rd - start_idx)) % OPENLST_RX_BUF_LEN;
+            consumed = ((uint16_t)(rx_buf_rd - start_idx)) % OPENLST_RX_BUF_LEN;
 
             uint8_t byte1 = rx_buf[rx_buf_rd];
             uint8_t byte2 = rx_buf[(rx_buf_rd + 1) % OPENLST_RX_BUF_LEN];
@@ -159,7 +158,8 @@ void openlst_process() {
 
         // Use an intermediate buffer if the packet wraps around the end of
         // the RX buffer.
-        if ((rx_buf_rd + 3) % OPENLST_RX_BUF_LEN + pkt_len >= OPENLST_RX_BUF_LEN) {
+        if ((rx_buf_rd + 3) % OPENLST_RX_BUF_LEN + pkt_len >=
+            OPENLST_RX_BUF_LEN) {
             int count = OPENLST_RX_BUF_LEN - (rx_buf_rd + 3);
             memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, count);
             memcpy(pkt_buf + count, rx_buf, pkt_len - count);
@@ -179,7 +179,7 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
 
     packet_t pkt;
     pkt.type = PACKET_TYPE_OPENLST;
-    pkt.lst_pkt = (openlst_packet_t *) buf;
+    pkt.lst_pkt = (openlst_packet_t *)buf;
     pkt.lst_pkt->len = len;
 
     switch (pkt.lst_pkt->hdr.command) {
@@ -191,11 +191,11 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
 
         // Ignore these commands
         case BOOTLOADER_PING:
-        case BOOTLOADER_ACK: // TODO: handle ACK
+        case BOOTLOADER_ACK:  // TODO: handle ACK
         case BOOTLOADER_WRITE_PAGE:
         case BOOTLOADER_ERASE:
-        case ACK: // TODO: handle ACK
-        case NACK: // TODO: handle NACK
+        case ACK:   // TODO: handle ACK
+        case NACK:  // TODO: handle NACK
         case REBOOT:
         default:
             break;
@@ -219,9 +219,7 @@ openlst_packet_t *openlst_get_tx_buffer() {
     }
 }
 
-uint16_t openlst_get_seq() {
-    return tx_seq++;
-}
+uint16_t openlst_get_seq() { return tx_seq++; }
 
 static void openlst_tx_dma(int pkt_idx) {
     // Send first 3 bytes, DMA won't be running yet
