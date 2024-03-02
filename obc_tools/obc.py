@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 import binascii
 import logging
 import struct
 
+from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler
 from openlst_tools.utils import unpack_cint, pack_cint
-
-from obc_commands import ObcCmds
 
 SHELL_HEADER = """\
 OBC shell
@@ -17,17 +18,130 @@ Commands can be accessed through the `obc` object
 
 Ex: `obc.ping()`"""
 
+
+class Gpio:
+    """Commands for controlling GPIO pins remotely."""
+
+    def __init__(self, obc: Obc):
+        self.obc = obc
+
+    def init_mask(self, mask: int):
+        """Initialize pins using bitmask.
+
+        Args:
+            mask (int): Pin mask
+        """
+
+        msg = bytearray()
+        msg.extend(pack_cint(mask, 4, False))
+        msg.append(0x01)
+
+        self.obc.obc_cmd(ObcCmds.GPIO, msg)
+
+    def init(self, pin: int):
+        """Initialize a pin.
+
+        Args:
+            pin (int): Pin number
+        """
+
+        self.init_mask(1 << pin)
+
+    def mode_mask(self, mask: int, mode: bool):
+        """Set pin mode using bitmask.
+
+        Args:
+            mask (int): Pin mask
+            mode (bool): Pin mode. True for output, False for input.
+        """
+
+        msg = bytearray()
+        msg.extend(pack_cint(mask, 4, False))
+        msg.append(0x03 if mode else 0x02)
+
+        self.obc.obc_cmd(ObcCmds.GPIO, msg)
+
+    def mode(self, pin: int, mode: bool, init: bool = True):
+        """Set pin mode.
+
+        Args:
+            pin (int): Pin number
+            mode (bool): Pin mode. True for output, False for input.
+            init (bool, optional): Initialize pin before setting mode. Defaults to True.
+        """
+
+        if init:
+            self.init(pin)
+
+        self.mode_mask(1 << pin, mode)
+
+    def set_mask(self, mask: int, value: bool):
+        """Set pin output using bitmask. A single output value will be applied
+        to all pins in the mask.
+
+        Args:
+            mask (int): Pin mask
+            value (bool): Output value
+        """
+
+        msg = bytearray()
+        msg.extend(pack_cint(mask, 4, False))
+        msg.append(0x04 if value else 0x05)
+
+        self.obc.obc_cmd(ObcCmds.GPIO, msg)
+
+    def set(self, pin: int, value: bool):
+        """Set pin output.
+
+        Args:
+            pin (int): Pin number
+            value (bool): Output value
+        """
+
+        self.set_mask(1 << pin, value)
+
+    def get_all(self):
+        msg = bytearray()
+        msg.extend([0x00] * 4)  # Pin field is ignored on read commands
+        msg.append(0xFF)
+
+        resp = self.obc.obc_cmd(ObcCmds.GPIO, msg, True)
+
+        if resp is None:
+            pass  # throw error?
+        else:
+            pass
+
+    def get_value(self, pin: int):
+        pass
+
+    def get_mode(self, pin: int):
+        pass
+
+
 class Obc(LstHandler):
-    def __init__(self, port: str, hwid: int, baud: int = 115200, rtscts: bool = False, timeout: float = 1) -> None:
+    def __init__(
+        self,
+        port: str,
+        hwid: int,
+        baud: int = 115200,
+        rtscts: bool = False,
+        timeout: float = 1,
+    ) -> None:
         super().__init__(port, hwid, baud, rtscts, timeout)
 
-    def obc_cmd(self, opcode: int, msg: bytes = bytes(), resp: bool = False):
+        self.gpio = Gpio(self)
+
+    def obc_cmd(self, opcode: int, data: bytes = bytes(), resp: bool = False):
         # Send command in OBC command format, returns response or sequence
         # number if response not expected
 
         assert opcode >= 0 and opcode < 256, "Command opcode invalid"
 
-        msg = bytes([opcode] + list(msg))
+        msg = bytearray()
+        msg.append(opcode)
+        msg.extend(data)
+
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
 
         if resp:
@@ -41,11 +155,6 @@ class Obc(LstHandler):
     def reboot(self) -> int:
         return self.obc_cmd(ObcCmds.REBOOT)
 
-    def gpio_get_all(self) -> int:
-        reply = self.obc_cmd(ObcCmds.GPIO, bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF]))
-
-    def gpio_get(self, pin) -> bool:
-        pass
 
 if __name__ == "__main__":
     import click

@@ -87,7 +87,9 @@ PIN_OP
 * 0x03 - Set pin mode to output
 * 0x04 - Set pin high
 * 0x05 - Set pin low
-* 0xFF - Read pin state (will return GPIO_STATE message)
+* 0xFF - Read pin state (ignores pin field, will return GPIO_STATE message with all pins)
+
+TODO: other pin features (like pullup/pulldown)
 
 ### 0x81 - GPIO_STATE
 
