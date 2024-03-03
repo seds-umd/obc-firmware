@@ -17,15 +17,6 @@ Ground commands will start with a command opcode byte which will dictate the for
 * 0xA0-0xBF - driver access
 * 0xC0-0xFF - reserved for future access to internals
 
-| Hex  | Opcode     | Firmware Status | Python Status | Testing |
-|------|------------|-----------------|---------------|---------|
-| 0x00 | ACK        | TODO            | TODO          | TODO    |
-| 0x01 | PING       | Done            | Done          | Working |
-| 0x02 | MSG        | Done            | Done          | Working |
-| 0x03 | REBOOT     | Done            | Done          | Working |
-| 0x80 | GPIO       | TODO            | TODO          | TODO    |
-| 0x81 | GPIO_STATE | TODO            | TODO          | TODO    |
-
 All multi byte fields have the least significant byte first, ie little endian if bytes are transmitted in the order they appear in memory.
 
 ## Commands

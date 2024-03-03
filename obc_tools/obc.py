@@ -5,6 +5,7 @@ from __future__ import annotations
 import binascii
 import logging
 import struct
+import time
 
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
@@ -182,7 +183,13 @@ class Obc(LstHandler):
             return seq
 
     def ping(self, msg: bytes = bytes()):
-        return self.obc_cmd(ObcCmds.PING, msg, True)
+        start = time.time()
+        reply = self.obc_cmd(ObcCmds.PING, msg, True)
+        end = time.time()
+
+        print(f"Received reply after {end - start:3f} seconds")
+
+        return reply
 
     def reboot(self) -> int:
         return self.obc_cmd(ObcCmds.REBOOT)
