@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 
+// Pack all structs into bytes
+#pragma pack(1)
+
 // Maximum size of an OpenLST packet, not including start bytes or size bytes
 #define OPENLST_MAX_PAYLOAD 251
 #define OPENLST_START_0 0x22
@@ -13,7 +16,17 @@
 
 ////////// Ground Commands //////////
 
-// typedef struct {};
+typedef union {
+    struct {
+        uint32_t pin;
+        uint8_t pin_op;
+    } gpio;
+
+    struct {
+        uint32_t pin_mode;
+        uint32_t pin_state;
+    } gpio_state;
+} command_t;
 
 ////////// OpenLST Packets //////////
 
@@ -47,17 +60,39 @@ typedef struct {
     uint8_t command;
 } openlst_packet_header_t;
 
+#define OPENLST_HEADER_SIZE sizeof(openlst_packet_header_t)
+
 typedef union {
-    uint8_t buf[OPENLST_MAX_PAYLOAD - sizeof(openlst_packet_header_t)];
+    uint8_t buf[OPENLST_MAX_PAYLOAD - OPENLST_HEADER_SIZE];
 
     // OpenLST commands
     // TODO
 
     // Ground commands
+    struct {
+        uint8_t opcode;
+        command_t msg;
+    } gnd_cmd;
 } openlst_packet_payload_t;
 
 /// @brief OpenLST packet structure
 typedef struct {
+    // Actual packet is 251 bytes long
     openlst_packet_header_t hdr;
     openlst_packet_payload_t pld;
+
+    // 5 extra bytes for padding to 256 bytes and metadata
+    uint8_t len; // Length as sent over UART, includes header and payload
+    uint8_t _padding[4];
 } openlst_packet_t;
+
+#define PACKET_TYPE_OPENLST 1
+#define PACKET_TYPE_PIB 2
+
+typedef struct {
+    int type;
+    union {
+        openlst_packet_t *lst_pkt;
+        // TODO: PIB packet
+    };
+} packet_t;

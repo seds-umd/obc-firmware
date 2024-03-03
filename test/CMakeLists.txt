@@ -18,7 +18,7 @@ include_directories(
 
 add_executable(tests
     # Add new sources files here
-    ../src/commands.c
+    ../src/command_handler.c
     ../src/openlst.c
     ../src/scheduler.c
 
@@ -32,6 +32,7 @@ add_executable(tests
     test_openlst.c
     test_scheduler.c
     test_uart.c
+    test_queue.c
 
     # Don't add src/main.c because it will conflict with test/main.c
 )
