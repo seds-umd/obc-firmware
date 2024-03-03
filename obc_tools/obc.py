@@ -8,7 +8,7 @@ import struct
 
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
-from openlst_tools.handler import LstHandler
+from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
 
 SHELL_HEADER = """\
@@ -101,22 +101,54 @@ class Gpio:
         self.set_mask(1 << pin, value)
 
     def get_all(self):
+        """Get mode and state of all pins.
+
+        Returns:
+            tuple(int, int): Tuple of (mode, state) where each bit represents a pin
+        """
+
         msg = bytearray()
         msg.extend([0x00] * 4)  # Pin field is ignored on read commands
         msg.append(0xFF)
 
-        resp = self.obc.obc_cmd(ObcCmds.GPIO, msg, True)
+        reply: Packet = self.obc.obc_cmd(ObcCmds.GPIO, msg, True)
 
-        if resp is None:
-            pass  # throw error?
-        else:
-            pass
+        pin_mode = unpack_cint(reply["data"][1:5], 4, False)
+        pin_state = unpack_cint(reply["data"][5:9], 4, False)
 
-    def get_value(self, pin: int):
-        pass
+        return pin_mode, pin_state
 
-    def get_mode(self, pin: int):
-        pass
+    def get_value(self, pin: int) -> bool:
+        """Read the value of a pin. Works for both inputs and outputs.
+
+        Args:
+            pin (int): Pin number
+
+        Returns:
+            bool: Pin state
+        """
+
+        assert pin >= 0 and pin < 32, f"Invalid pin {pin}"
+
+        _, state = self.get_all()
+
+        return bool((state >> pin) & 0x1)
+
+    def get_mode(self, pin: int) -> bool:
+        """Get pin mode. Probably broken right now.
+
+        Args:
+            pin (int): Pin number
+
+        Returns:
+            bool: Pin mode
+        """
+
+        assert pin >= 0 and pin < 32, f"Invalid pin {pin}"
+
+        mode, _ = self.get_all()
+
+        return bool((mode >> pin) & 0x1)
 
 
 class Obc(LstHandler):

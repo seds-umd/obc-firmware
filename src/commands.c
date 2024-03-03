@@ -98,7 +98,7 @@ static int command_gpio(packet_t *pkt) {
             reply->hdr.seq = pkt->lst_pkt->hdr.seq;
             reply->hdr.system = 0x01;
             reply->hdr.command = ASCII;
-            reply->len = 5;
+            reply->len = 9 + OPENLST_HEADER_SIZE;
 
             reply->pld.gnd_cmd.opcode = 0x81;  // GPIO_STATE command
             reply->pld.gnd_cmd.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
