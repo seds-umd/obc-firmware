@@ -7,6 +7,8 @@ include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 project(obc_fw C CXX ASM)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
