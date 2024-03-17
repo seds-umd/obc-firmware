@@ -4,7 +4,6 @@
 
 #include <stdint.h>
 
-// Initialize OpenLST command processor
 /**
  * @brief Initialize OpenLST command processor.
  * 
