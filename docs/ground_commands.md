@@ -79,6 +79,37 @@ Reboots OBC immediately.
 
 TODO: would it be useful to add a delay?
 
+### 0x10 - TELEM_REQ
+
+Message is empty.
+
+### 0x11 - TELEM_RESP
+
+| Field           | Size |
+|-----------------|------|
+| UPTIME_MS       | 4    |
+| TELEM_AGE_MS    | 2    |
+| V_MB_BATT_MV    | 2    |
+| V_MB_4V2_MV     | 2    |
+| V_MB_3V3_MV     | 2    |
+| V_LST_4V2_MV    | 2    |
+| V_LST_3V3_MV    | 2    |
+| I_MB_3V3_OBC_MA | 2    |
+| I_MB_3V3_GPS_MA | 2    |
+| I_MB_3V3_LST_MA | 2    |
+| I_MB_4V2_LST_MA | 2    |
+| T_LST0_CC       | 2    |
+| T_LST1_CC       | 2    |
+| T_OBC0_CC       | 2    |
+| T_OBC1_CC       | 2    |
+| T_RP2040_CC     | 2    |
+| T_CC1110_CC     | 2    |
+| ... | ... |
+
+UPTIME_MS is the number of milliseconds since boot. TELEM_AGE_MS is the number of milliseconds since the telemetry was updated, ie UPTIME_MS(now) - UPTIME_MS(telem updated). UPTIME_MS(now) is measured when the response packet is being assembled, and UPTIME_MS(telem updated) is updated when the telemetry packet is updated.
+
+Field name prefix indicated type: V_ means voltage, I_ means current, T_ means temperature. Suffix indicates units: _MS is milliseconds, _MV is millivolts, _MA is milliamps, _CC is centiCelsius.
+
 ### 0x80 - GPIO
 
 | Field  | Size |
@@ -132,3 +163,66 @@ An ADC_READING packet will be returned with the results of the conversion.
 | ...       | ...  |
 
 Results of an ADC reading. The DATA field is repeated depending on how many channels were selected in the ADC command. The DATA fields are in increasing order of index, but may not necessarily be consecutive, depending on which channels were selected.
+
+### 0xA0 - FLASH_CMD
+
+| Field    | Size     |
+|----------|----------|
+| CMD      | 1        |
+| *Varies* | *Varies* |
+
+The CMD field determines which flash operation will be performed. The contents of the rest of the message depends on the specific operation.
+
+The possible values for CMD are:
+
+* 0x00 - Read
+* 0x01 - Program
+* 0x02 - Erase
+* 0x03 - Read unique ID
+* TODO: commands for status and config registers
+
+The subsections below describe the message contents for each specific operation.
+
+#### 0x00 - READ
+
+| Field | Size |
+|-------|------|
+| ADDR  | 3    |
+| SIZE  | 1    |
+
+The READ operation performs a flash read and returns the data received. The ADDR field indicates the address to start the read. The address can be any value, there are no alignment requirements. SIZE indicates the number of bytes to read. If it is greater than the maximum value of TBD bytes, only TBD bytes will be returned.
+
+#### 0x01 - PROGRAM
+
+| Field | Size |
+|-------|------|
+| ADDR  | 3    |
+| DATA  | N    |
+
+The PROGRAM operation performs a page program. ADDR is the address to start programming at and DATA is the data to be programmed. DATA can be any length up to the maximum allowed size of TBD bytes. ADDR does not have alignment requirements, however if the program operation crosses a page boundary (pages are 256 bytes) it will wrap around to the beginning of the page.
+
+For example, a program operation starting at 0x0F0 and containing 0x20 bytes will program bytes 0x0F0-0x0FF and then bytes 0x000-0x00F. The leading zeros are left off for simplicity; addresses are normally 24 bits long.
+
+#### 0x02 - ERASE
+
+| Field | Size |
+|-------|------|
+| ADDR  | 3    |
+| SIZE  | 1    |
+
+Erase a sector or block. ADDR refers to the address of the block being erase. SIZE indicates the erase size to use (sector or block).
+
+Valid values for SIZE:
+* 0x00 - sector (4 kB)
+* 0x01 - block (32 kB)
+* 0x02 - block (64 kB)
+
+#### 0x03 - UNIQUE_ID
+
+Returns the flash unique ID.
+
+### 0xA1 - FLASH_RESP
+
+| Field    | Size |
+|----------|------|
+| CMD_RESP | 1    |
