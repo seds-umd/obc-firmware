@@ -26,6 +26,36 @@ typedef union {
         uint32_t pin_mode;
         uint32_t pin_state;
     } gpio_state;
+
+    struct {
+        uint8_t cmd;
+
+        union {
+            struct {
+                uint8_t addr[3];
+                uint8_t size;
+            } read;
+
+            struct {
+                uint8_t addr[3];
+                // Data length dictated by buffer in openlst_packet_payload_t
+                uint8_t data[1];
+            } program;
+
+            struct {
+                uint8_t addr[3];
+                uint8_t size;
+            } erase;
+
+            struct {
+                uint8_t data[1];
+            } read_resp;
+
+            struct {
+                uint64_t unique_id;
+            } unique_id_resp;
+        };
+    } flash_cmd;
 } command_t;
 
 ////////// OpenLST Packets //////////

@@ -1,6 +1,7 @@
 #include "config.h"
 #include "command_handler.h"
 #include "commands.h"
+#include "flash.h"
 #include "logging.h"
 #include "openlst.h"
 #include "scheduler.h"
@@ -22,6 +23,7 @@ int main() {
     gpio_set_dir(DEBUG_PIN, true);
     gpio_put(DEBUG_PIN, false);
 
+    flash_setup(DATA_FLASH_CS);
     openlst_init();
 
     scheduler_init();

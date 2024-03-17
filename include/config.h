@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hardware/irq.h"
+#include "hardware/spi.h"
 #include "hardware/uart.h"
 
 // WARNING: current pinouts are for debugging, must change for actual OBC hardware
@@ -23,6 +24,17 @@
 
 // TX buffer count must be <=32 because status is stored as uint32_t bitmask
 #define OPENLST_TX_BUF_COUNT 4
+
+////////// DATA FLASH //////////
+
+#define DATA_FLASH_SPI spi0
+#define DATA_FLASH_RX 0
+#define DATA_FLASH_CS 1
+#define DATA_FLASH_SCK 2
+#define DATA_FLASH_TX 3
+
+// Max possible speed
+#define DATA_FLASH_BAUD 125000000/2
 
 ////////// PINOUTS //////////
 

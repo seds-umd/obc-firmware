@@ -46,6 +46,8 @@ For each command format, an OPCODE field is implied at the start, for example:
 
 If no packet structure is listed for a command, then it will contain no data after the opcode.
 
+The sizes listed for commands are the total sizes, including the opcode but not including the OpenLST header.
+
 ### 0x00 - ACK
 
 | Field | Size |
@@ -185,6 +187,8 @@ The subsections below describe the message contents for each specific operation.
 
 #### 0x00 - READ
 
+Size: 6
+
 | Field | Size |
 |-------|------|
 | ADDR  | 3    |
@@ -193,6 +197,8 @@ The subsections below describe the message contents for each specific operation.
 The READ operation performs a flash read and returns the data received. The ADDR field indicates the address to start the read. The address can be any value, there are no alignment requirements. SIZE indicates the number of bytes to read. If it is greater than the maximum value of TBD bytes, only TBD bytes will be returned.
 
 #### 0x01 - PROGRAM
+
+Size: 5 + N
 
 | Field | Size |
 |-------|------|
@@ -204,6 +210,8 @@ The PROGRAM operation performs a page program. ADDR is the address to start prog
 For example, a program operation starting at 0x0F0 and containing 0x20 bytes will program bytes 0x0F0-0x0FF and then bytes 0x000-0x00F. The leading zeros are left off for simplicity; addresses are normally 24 bits long.
 
 #### 0x02 - ERASE
+
+Size: 6
 
 | Field | Size |
 |-------|------|
@@ -226,3 +234,23 @@ Returns the flash unique ID.
 | Field    | Size |
 |----------|------|
 | CMD_RESP | 1    |
+
+CMD_RESP can be:
+* 0x00 - READ response
+* 0x01 - UNIQUE_ID response
+
+#### 0x00 - READ Response
+
+Size: 2 + N
+
+| Field | Size |
+|-------|------|
+| DATA  | N    |
+
+#### 0x01 - UNIQUE_ID Response
+
+Size: 10
+
+| Field     | Size |
+|-----------|------|
+| UNIQUE_ID | 8    |

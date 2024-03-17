@@ -1,6 +1,7 @@
 #include "commands.h"
 
 #include "command_handler.h"
+#include "flash.h"
 #include "logging.h"
 #include "macros.h"
 #include "openlst.h"
@@ -15,6 +16,7 @@
 static int command_ping(packet_t *pkt);
 static int command_reboot(packet_t *pkt);
 static int command_gpio(packet_t *pkt);
+static int command_flash(packet_t *pkt);
 
 void command_setup() {
     command_init();
@@ -25,6 +27,9 @@ void command_setup() {
 
     // Hardware
     command_register(0x80, command_gpio);
+
+    // Drivers
+    command_register(0xA0, command_flash);
 }
 
 static int command_ping(packet_t *pkt) {
@@ -103,6 +108,78 @@ static int command_gpio(packet_t *pkt) {
             reply->pld.gnd_cmd.opcode = 0x81;  // GPIO_STATE command
             reply->pld.gnd_cmd.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
             reply->pld.gnd_cmd.msg.gpio_state.pin_state = sio_hw->gpio_in;
+
+            openlst_tx(reply);
+            break;
+
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+static int command_flash(packet_t *pkt) {
+    uint8_t op = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.cmd;
+    uint32_t addr;
+    uint8_t size;
+    openlst_packet_t *reply;
+
+    // TODO: don't block if flash is busy
+    switch (op) {
+        // Read
+        case 0x00:
+            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.addr);
+            size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.size;
+
+            // Ignore request with size too large
+            // TODO: figure out actual max size
+            if (size > OPENLST_MAX_PAYLOAD) {
+                return 0;
+            }
+
+            reply = openlst_get_tx_buffer();
+            reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+            reply->len = OPENLST_HEADER_SIZE + 2 + size;
+
+            while (flash_is_busy());
+            flash_read_bytes(addr, reply->pld.gnd_cmd.msg.flash_cmd.read_resp.data, size);
+
+            openlst_tx(reply);
+            break;
+
+        // Program
+        case 0x01:
+            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.addr);
+            size = pkt->lst_pkt->len - OPENLST_HEADER_SIZE - 5;
+
+            while (flash_is_busy());
+            flash_write_bytes(addr, pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.data, size);
+            break;
+
+        // Erase
+        case 0x02:
+            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.addr);
+            size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.size;
+
+            if (size == 0x00) {
+                flash_erase_4k(addr);
+            } else if (size == 0x01) {
+                flash_erase_32k(addr);
+            } else if (size == 0x02) {
+                flash_erase_64k(addr);
+            }
+            break;
+
+        // Unique ID
+        case 0x03:;
+            uint64_t id = flash_unique_id();
+
+            reply = openlst_get_tx_buffer();
+            reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+            reply->len = OPENLST_HEADER_SIZE + 10;
+
+            pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.unique_id_resp.unique_id = id;
 
             openlst_tx(reply);
             break;
