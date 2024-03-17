@@ -152,6 +152,75 @@ class Gpio:
         return bool((mode >> pin) & 0x1)
 
 
+class Flash:
+    def __init__(self, obc: Obc):
+        self.obc = obc
+
+    def read_raw(self, addr: int, len: int):
+        assert addr >= 0 and addr < 2**24
+
+        # todo: check data length
+        msg = bytearray()
+        msg.append(0x00)
+        msg.extend(pack_cint(addr, 4, False)[0:3])
+        msg.extend(pack_cint(len, 1, False))
+
+        reply: Packet = self.obc.obc_cmd(ObcCmds.FLASH_CMD, msg, True)
+
+        assert reply["data"][1] == 0x00
+        read_data = reply["data"][2:]
+
+        return read_data
+
+    def write_raw(self, addr: int, data: bytes):
+        assert addr >= 0 and addr < 2**24
+
+        # todo: check data length
+
+        msg = bytearray()
+        msg.append(0x01)
+        msg.extend(pack_cint(addr, 4, False)[0:3])
+        msg.extend(data)
+
+        self.obc.obc_cmd(ObcCmds.FLASH_CMD, msg)
+
+    def erase_4k(self, addr: int):
+        assert addr >= 0 and addr < 2**24
+
+        msg = bytearray()
+        msg.append(0x02)
+        msg.extend(pack_cint(addr, 4, False)[0:3])
+        msg.append(0x00)
+
+        self.obc.obc_cmd(ObcCmds.FLASH_CMD, msg)
+
+    def erase_32k(self, addr: int):
+        assert addr >= 0 and addr < 2**24
+        
+        msg = bytearray()
+        msg.append(0x02)
+        msg.extend(pack_cint(addr, 4, False)[0:3])
+        msg.append(0x01)
+
+        self.obc.obc_cmd(ObcCmds.FLASH_CMD, msg)
+
+    def erase_64k(self, addr: int):
+        assert addr >= 0 and addr < 2**24
+
+        msg = bytearray()
+        msg.append(0x02)
+        msg.extend(pack_cint(addr, 4, False)[0:3])
+        msg.append(0x02)
+
+        self.obc.obc_cmd(ObcCmds.FLASH_CMD, msg)
+
+    def get_unique_id(self):
+        reply: Packet = self.obc.obc_cmd(ObcCmds.FLASH_CMD, [0x03], True)
+
+        id = unpack_cint(reply["data"][2:10], 8, False)
+
+        return id
+
 class Obc(LstHandler):
     def __init__(
         self,
@@ -164,6 +233,7 @@ class Obc(LstHandler):
         super().__init__(port, hwid, baud, rtscts, timeout)
 
         self.gpio = Gpio(self)
+        self.flash = Flash(self)
 
     def obc_cmd(self, opcode: int, data: bytes = bytes(), resp: bool = False):
         # Send command in OBC command format, returns response or sequence

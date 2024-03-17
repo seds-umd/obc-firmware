@@ -33,8 +33,8 @@
 #define DATA_FLASH_SCK 2
 #define DATA_FLASH_TX 3
 
-// Max possible speed
-#define DATA_FLASH_BAUD 125000000/2
+// TODO: figure out how to make faster
+#define DATA_FLASH_BAUD 125000000/8
 
 ////////// PINOUTS //////////
 

@@ -25,7 +25,7 @@ static inline uint32_t flash_addr_conv(uint8_t *buf) {
 
     addr |= buf[0];
     addr |= (buf[1] << 8);
-    addr |= (buf[2] << 8);
+    addr |= (buf[2] << 16);
 
     return addr;
 }

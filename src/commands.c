@@ -141,9 +141,11 @@ static int command_flash(packet_t *pkt) {
             reply = openlst_get_tx_buffer();
             reply->hdr.seq = pkt->lst_pkt->hdr.seq;
             reply->len = OPENLST_HEADER_SIZE + 2 + size;
+            reply->pld.gnd_cmd.opcode = 0xA1;
 
-            while (flash_is_busy());
+            flash_wait_done();
             flash_read_bytes(addr, reply->pld.gnd_cmd.msg.flash_cmd.read_resp.data, size);
+            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x00; // READ response
 
             openlst_tx(reply);
             break;
@@ -153,7 +155,7 @@ static int command_flash(packet_t *pkt) {
             addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.addr);
             size = pkt->lst_pkt->len - OPENLST_HEADER_SIZE - 5;
 
-            while (flash_is_busy());
+            flash_wait_done();
             flash_write_bytes(addr, pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.data, size);
             break;
 
@@ -162,6 +164,7 @@ static int command_flash(packet_t *pkt) {
             addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.addr);
             size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.size;
 
+            flash_wait_done();
             if (size == 0x00) {
                 flash_erase_4k(addr);
             } else if (size == 0x01) {
@@ -172,14 +175,15 @@ static int command_flash(packet_t *pkt) {
             break;
 
         // Unique ID
-        case 0x03:;
-            uint64_t id = flash_unique_id();
-
+        case 0x03:
             reply = openlst_get_tx_buffer();
             reply->hdr.seq = pkt->lst_pkt->hdr.seq;
             reply->len = OPENLST_HEADER_SIZE + 10;
+            reply->pld.gnd_cmd.opcode = 0xA1;
 
-            pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.unique_id_resp.unique_id = id;
+            uint64_t id = flash_unique_id();
+            reply->pld.gnd_cmd.msg.flash_cmd.unique_id_resp.unique_id = id;
+            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x01; // UNIQUE_ID response
 
             openlst_tx(reply);
             break;
