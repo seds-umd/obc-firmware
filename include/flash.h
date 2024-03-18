@@ -16,6 +16,11 @@
 #define FLASH_CMD_POWER_UP 0xAB
 #define FLASH_CMD_JEDEC_ID 0x9F
 #define FLASH_CMD_UNIQUE_ID 0x4B
+#define FLASH_CMD_READ_SR1 0x05
+#define FLASH_CMD_READ_SR2 0x35
+#define FLASH_CMD_READ_SR3 0x15
+#define FLASH_CMD_WRITE_SR3 0x11
+// No definitions for writing SR1 and SR2 to prevent accidental writing to OTP bits
 
 #define FLASH_STATUS_BUSY_MASK 0x01
 
@@ -106,3 +111,5 @@ void flash_get_id(uint8_t *mf_id, uint16_t *dev_id);
 
 // Get unique ID
 uint64_t flash_unique_id();
+
+uint32_t flash_read_status();

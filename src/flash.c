@@ -60,6 +60,13 @@ void flash_setup(uint cs) {
     if (actual > 50*1000*1000) {
         fast = true;
     }
+
+    // Set register to all 0s to set drive strength to max
+    flash_write_enable();
+    uint8_t cmdbuf[2] = {FLASH_CMD_WRITE_SR3, 0};
+    cs_select();
+    spi_write_blocking(DATA_FLASH_SPI, cmdbuf, 2);
+    cs_deselect();
 }
 
 void flash_read_bytes(uint32_t addr, uint8_t *buf, size_t len) {
@@ -212,4 +219,32 @@ uint64_t flash_unique_id() {
                   ((uint64_t) cmdbuf[7] << 0);
 
     return id;
+}
+
+uint32_t flash_read_status() {
+    uint8_t cmdbuf[1];
+    uint32_t status = 0;
+
+    cmdbuf[0] = FLASH_CMD_READ_SR1;
+    cs_select();
+    spi_write_blocking(DATA_FLASH_SPI, cmdbuf, 1);
+    spi_read_blocking(DATA_FLASH_SPI, 0, cmdbuf, 1);
+    cs_deselect();
+    status |= cmdbuf[0];
+
+    cmdbuf[0] = FLASH_CMD_READ_SR2;
+    cs_select();
+    spi_write_blocking(DATA_FLASH_SPI, cmdbuf, 1);
+    spi_read_blocking(DATA_FLASH_SPI, 0, cmdbuf, 1);
+    cs_deselect();
+    status |= cmdbuf[0] << 8;
+
+    cmdbuf[0] = FLASH_CMD_READ_SR3;
+    cs_select();
+    spi_write_blocking(DATA_FLASH_SPI, cmdbuf, 1);
+    spi_read_blocking(DATA_FLASH_SPI, 0, cmdbuf, 1);
+    cs_deselect();
+    status |= cmdbuf[0] << 16;
+
+    return status;
 }
