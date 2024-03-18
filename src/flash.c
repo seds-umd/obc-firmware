@@ -60,13 +60,6 @@ void flash_setup(uint cs) {
     if (actual > 50*1000*1000) {
         fast = true;
     }
-
-    // Set register to all 0s to set drive strength to max
-    flash_write_enable();
-    uint8_t cmdbuf[2] = {FLASH_CMD_WRITE_SR3, 0};
-    cs_select();
-    spi_write_blocking(DATA_FLASH_SPI, cmdbuf, 2);
-    cs_deselect();
 }
 
 void flash_read_bytes(uint32_t addr, uint8_t *buf, size_t len) {
