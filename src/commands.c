@@ -17,6 +17,7 @@ static int command_ping(packet_t *pkt);
 static int command_reboot(packet_t *pkt);
 static int command_gpio(packet_t *pkt);
 static int command_flash(packet_t *pkt);
+static int command_telem(packet_t *pkt);
 
 void command_setup() {
     command_init();
@@ -24,6 +25,9 @@ void command_setup() {
     // Misc
     command_register(0x01, command_ping);
     command_register(0x03, command_reboot);
+
+    // Telemetry
+    command_register(0x10, command_telem);
 
     // Hardware
     command_register(0x80, command_gpio);
@@ -129,7 +133,8 @@ static int command_flash(packet_t *pkt) {
     switch (op) {
         // Read
         case 0x00:
-            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.addr);
+            addr = flash_addr_conv(
+                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.addr);
             size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.size;
 
             // Ignore request with size too large
@@ -144,24 +149,29 @@ static int command_flash(packet_t *pkt) {
             reply->pld.gnd_cmd.opcode = 0xA1;
 
             flash_wait_done();
-            flash_read_bytes(addr, reply->pld.gnd_cmd.msg.flash_cmd.read_resp.data, size);
-            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x00; // READ response
+            flash_read_bytes(
+                addr, reply->pld.gnd_cmd.msg.flash_cmd.read_resp.data, size);
+            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x00;  // READ response
 
             openlst_tx(reply);
             break;
 
         // Program
         case 0x01:
-            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.addr);
+            addr = flash_addr_conv(
+                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.addr);
             size = pkt->lst_pkt->len - OPENLST_HEADER_SIZE - 5;
 
             flash_wait_done();
-            flash_write_bytes(addr, pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.data, size);
+            flash_write_bytes(
+                addr, pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.data,
+                size);
             break;
 
         // Erase
         case 0x02:
-            addr = flash_addr_conv(pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.addr);
+            addr = flash_addr_conv(
+                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.addr);
             size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.size;
 
             flash_wait_done();
@@ -183,7 +193,7 @@ static int command_flash(packet_t *pkt) {
 
             uint64_t id = flash_unique_id();
             reply->pld.gnd_cmd.msg.flash_cmd.unique_id_resp.unique_id = id;
-            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x01; // UNIQUE_ID response
+            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x01;  // UNIQUE_ID response
 
             openlst_tx(reply);
             break;
@@ -191,6 +201,21 @@ static int command_flash(packet_t *pkt) {
         default:
             break;
     }
+
+    return 0;
+}
+
+static int command_telem(packet_t *pkt) {
+    struct telem_struct *telem = telem_get();
+
+    openlst_packet_t *reply = openlst_get_tx_buffer();
+    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+    reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(*telem);
+    reply->pld.gnd_cmd.opcode = 0x11;
+
+    memcpy(&reply->pld.gnd_cmd.msg.telem, telem, sizeof(*telem));
+
+    openlst_tx(reply);
 
     return 0;
 }

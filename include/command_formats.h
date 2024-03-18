@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "telemetry.h"
+
 #include <stdint.h>
 
 // Pack all structs into bytes
@@ -56,6 +58,8 @@ typedef union {
             } unique_id_resp;
         };
     } flash_cmd;
+
+    struct telem_struct telem;
 } command_t;
 
 ////////// OpenLST Packets //////////
@@ -112,7 +116,7 @@ typedef struct {
     openlst_packet_payload_t pld;
 
     // 5 extra bytes for padding to 256 bytes and metadata
-    uint8_t len; // Length as sent over UART, includes header and payload
+    uint8_t len;  // Length as sent over UART, includes header and payload
     uint8_t _padding[4];
 } openlst_packet_t;
 

@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "openlst.h"
 #include "scheduler.h"
+#include "telemetry.h"
 
 #include "hardware/gpio.h"
 #include "pico/rand.h"
@@ -32,6 +33,9 @@ int main() {
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);
+
+    // Update telemetry every second
+    scheduler_add_task(telem_update, 1 * 1000 * 1000);
 
     command_setup();
 

@@ -8,6 +8,7 @@ import struct
 import time
 
 from obc_commands import ObcCmds
+from telemetry import Telemetry
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
@@ -264,6 +265,10 @@ class Obc(LstHandler):
     def reboot(self) -> int:
         return self.obc_cmd(ObcCmds.REBOOT)
 
+    def get_telem(self) -> Telemetry:
+        reply: Packet = self.obc_cmd(ObcCmds.TELEM_REQ, resp=True)
+
+        return Telemetry.decode(reply["data"][1:])
 
 if __name__ == "__main__":
     import click
