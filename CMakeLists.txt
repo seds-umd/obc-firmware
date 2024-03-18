@@ -20,6 +20,7 @@ include_directories(
 
 add_executable(obc_fw
     # Internal source files
+    src/amux.c
     src/commands.c
     src/command_handler.c
     src/flash.c
@@ -38,6 +39,7 @@ target_link_libraries(obc_fw
     pico_multicore
     pico_stdlib
     pico_rand
+    hardware_adc
     hardware_dma
     hardware_spi
 )

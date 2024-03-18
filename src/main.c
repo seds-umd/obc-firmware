@@ -1,3 +1,4 @@
+#include "amux.h"
 #include "config.h"
 #include "command_handler.h"
 #include "commands.h"
@@ -27,8 +28,11 @@ int main() {
     openlst_init();
 
     scheduler_init();
+    amux_init();
 
     log_msg("booted");
+
+    select_all();
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);
