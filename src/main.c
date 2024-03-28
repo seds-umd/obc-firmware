@@ -33,6 +33,7 @@ int main() {
     log_msg("booted");
 
     select_all();
+    //read_temp(2); // read temp_obc_1
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);

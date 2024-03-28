@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include "logging.h"
 #include "amux.h"
+#include <math.h>
 
 void amux_init() 
 {
@@ -26,7 +27,7 @@ void amux_init()
     adc_gpio_init(26);
     adc_select_input(0);
 
-    gpio_init(SELECT_0);//Don't know if gpio_init will take this since it's not uint, will find out in testing
+    gpio_init(SELECT_0);
     gpio_init(SELECT_1);
     gpio_init(SELECT_2);
     gpio_init(SELECT_3);
@@ -37,33 +38,46 @@ void amux_init()
 }
 
 void set_select(uint8_t select_number){
-    //initialize the select lines to their respective bits
-    uint32_t select[4] = { (select_number>>3), ((select_number%8)>>2),
-                            ((select_number%4)>>1), (select_number%2) };
 
     //slowly take the bits of the number with masking
-    gpio_put(SELECT_0, select[0]);
-    gpio_put(SELECT_1, select[1]);
-    gpio_put(SELECT_2, select[2]);
-    gpio_put(SELECT_3, select[3]);
+    gpio_put(SELECT_3, (select_number>>3) & 1);
+    gpio_put(SELECT_2, (select_number>>2) & 1);
+    gpio_put(SELECT_1, (select_number>>1) & 1);
+    gpio_put(SELECT_0, select_number & 1);
+
 }
 
 void select_all()
 {
-    uint16_t val;
+    uint32_t val;
     for (int i = 0; i < 16; i++)
     {
         set_select(i);
         sleep_ms(50);
         val = read_adc();
-        log_fmt("value at channel %d: %f", i, val);
+        log_fmt("value at channel %d: %f", i, val / 1000000.0);
         sleep_ms(50);
     }
 }
 
-uint16_t read_adc()
+uint32_t read_adc()
 {
-    const float conversion_factor = 3.3f / (1 << 12);
-    uint16_t result = adc_read();
-    return result * conversion_factor;
+    uint32_t conversion_factor = 3300000 / (1 << 12) ;
+    uint32_t result = adc_read() * conversion_factor;
+    return result;
+}
+
+void read_temp(int channel)
+{
+    set_select(channel);
+    sleep_ms(50);
+
+    float R0 = 10000;
+    float T0 = 273.15 + 25; // kelvin
+    float B = 3435;
+    float out = adc_read() * 3.3 / (1 << 12);
+    float R = out * R0 / (3.3 - out);
+    log_fmt("resistance: %f", R);
+    float T = 1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15;
+    log_fmt("temp at channel %d: (volt) %f, (final) %f", channel, out, T);
 }
