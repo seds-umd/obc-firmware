@@ -26,7 +26,7 @@ struct telem_struct {
     uint32_t lst_uart1_rx;
     int8_t lst_rssi_last;
     int8_t lst_rssi_cont;
-    uint16_t lst_lqi_last;
+    uint8_t lst_lqi_last;
     int8_t lst_freqest_last;
     uint32_t lst_packets_sent;
     uint32_t lst_cs_count;

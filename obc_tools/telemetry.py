@@ -66,6 +66,23 @@ class Telemetry(TypedDict):
         telem['t_obc1_cc'] = unpack_cint(pop(2), 2, False)
         telem['t_rp2040_cc'] = unpack_cint(pop(2), 2, False)
         telem['t_cc1110_cc'] = unpack_cint(pop(2), 2, False)
+        telem['lst_uptime_ms'] = unpack_cint(pop(4), 4, False)
+        telem['lst_uart1_rx'] = unpack_cint(pop(4), 4, False)
+        telem['lst_rssi_last'] = unpack_cint(pop(1), 1, True)
+        telem['lst_rssi_cont'] = unpack_cint(pop(1), 1, True)
+        telem['lst_lqi_lst'] = unpack_cint(pop(1), 1, False)
+        telem['lst_freqest_last'] = unpack_cint(pop(1), 1, True)
+        telem['lst_packets_sent'] = unpack_cint(pop(4), 4, False)
+        telem['lst_cs_count'] = unpack_cint(pop(4), 4, False)
+        telem['lst_reject_crc'] = unpack_cint(pop(4), 4, False)
+        telem['lst_reject_other'] = unpack_cint(pop(4), 4, False)
+        telem['lst_freq'] = unpack_cint(pop(4), 4, False)
+        telem['lst_fsctrl'] = unpack_cint(pop(2), 2, False)
+        telem['lst_chan_bw'] = unpack_cint(pop(1), 1, False)
+        telem['lst_drate_e'] = unpack_cint(pop(1), 1, False)
+        telem['lst_drate_m'] = unpack_cint(pop(1), 1, False)
+        telem['lst_deviatn'] = unpack_cint(pop(1), 1, False)
+        telem['lst_power'] = unpack_cint(pop(1), 1, False)
 
         # TODO: decode everything
 
