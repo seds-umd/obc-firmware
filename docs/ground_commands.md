@@ -112,6 +112,20 @@ UPTIME_MS is the number of milliseconds since boot. TELEM_AGE_MS is the number o
 
 Field name prefix indicated type: V_ means voltage, I_ means current, T_ means temperature. Suffix indicates units: _MS is milliseconds, _MV is millivolts, _MA is milliamps, _CC is centiCelsius.
 
+### 0x40 - OPENLST_PWR
+
+Power cycles OpenLST. Message has no contents. After power cycle an ACK will be sent.
+
+### 0x41 - ANT_CMD
+
+| Field  | Size |
+| ------ | ---- |
+| MAGIC  | 8    |
+
+Activate antenna deployment mechanism.
+
+The MAGIC field a string of bytes used to provide extra assurance that the command is not decoded accidentally. A deploy command will not be processed if the bytes do not match the expected value. The bytes are: [70 b0 76 bd 6d 5b 26 27]. This string of bytes must not be used anywhere else.
+
 ### 0x80 - GPIO
 
 | Field  | Size |
