@@ -56,12 +56,6 @@ static uint8_t *make_packet(uint16_t hwid, uint16_t seq, uint8_t sys, uint8_t cm
 void test_openlst() {
     char str_buf[100];
 
-    uint32_t seed = time(NULL);
-    srand(seed);
-
-    // Log seed so failures can be repeated
-    printf("Running OpenLST RX handler test with seed %d\n", seed);
-
     sum1 = 0;
     sum2 = 0;
     count1 = 0;

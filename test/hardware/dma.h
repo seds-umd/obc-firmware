@@ -6,11 +6,13 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <stdbool.h>
-#include <stdint.h>
+#pragma once
 
 #include "macros.h"
 #include "misc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define DREQ_UART0_TX 0
 #define DREQ_UART1_TX 0

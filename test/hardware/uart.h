@@ -2,12 +2,13 @@
 
 #include "macros.h"
 #include "misc.h"
+
 #include <stdbool.h>
 
 #define UART_PARITY_NONE 0
 #define UART_UARTIFLS_RXIFLSEL_BITS 0
 
-#define UART_DR(uart) uart_sim_get(uart)
+#define UART_DR(uart) uart_sim_rx_get(uart)
 
 typedef struct {
     uint8_t *rx_buf;
@@ -36,14 +37,17 @@ void uart_sim_deinit(uart_inst_t *uart);
 // Send data to simulation
 void uart_sim_send(uart_inst_t *uart, uint8_t *buf, uint len);
 
-// Number of bytes in simulated UART FIFO
+// Number of bytes in RX FIFO
 uint uart_sim_rx_buf_size(uart_inst_t *uart);
 
-// Get UART byte
-uint8_t uart_sim_get(uart_inst_t *uart);
+// Get UART byte from RX FIFO
+uint8_t uart_sim_rx_get(uart_inst_t *uart);
 
-// Send UART byte
-void uart_putc_raw(uart_inst_t *uart, char c);
+// Number of bytes in TX FIFO
+uint uart_sim_tx_buf_size(uart_inst_t *uart);
+
+// Get UART byte from TX FIFO
+uint8_t uart_sim_tx_get(uart_inst_t *uart);
 
 ////////// Simulated sdk functions //////////
 
@@ -52,6 +56,9 @@ bool uart_is_readable(uart_inst_t *uart);
 
 // Returns a fake uart register struct with simulated data
 uart_hw_t *uart_get_hw(uart_inst_t *uart);
+
+// Send UART byte
+void uart_putc_raw(uart_inst_t *uart, char c);
 
 ////////// Empty functions //////////
 

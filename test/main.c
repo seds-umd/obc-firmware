@@ -1,12 +1,21 @@
 #include "unity.h"
 #include "tests.h"
 
+#include <stdlib.h>
+#include <time.h>
+
 // Empty setup and teardown so compiler doesn't get mad
 void setUp() {}
 
 void tearDown() {}
 
 int main(void) {
+    uint32_t seed = time(NULL);
+    srand(seed);
+
+    // Log seed so failures can be repeated
+    printf("Seed %d\n", seed);
+
     UNITY_BEGIN();
 
     TEST_MESSAGE(

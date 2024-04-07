@@ -1,3 +1,5 @@
+#pragma once
+
 // Put function declarations of tests here
 void test_uart();
 void test_queue();

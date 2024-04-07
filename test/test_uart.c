@@ -7,9 +7,6 @@
 #define BUF_SIZE 256
 
 void test_uart() {
-    // Make test deterministic
-    srand(0x58209348);
-
     // Relatively small buffer to keep things simple
     uart_sim_init(&uart0, BUF_SIZE);
     uint8_t buf[BUF_SIZE];
