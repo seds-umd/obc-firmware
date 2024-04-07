@@ -1,11 +1,5 @@
 #include "unity.h"
-
-// Add function declarations here for every test
-void test_uart();
-void test_queue();
-void test_commands();
-void test_scheduler();
-void test_openlst();
+#include "tests.h"
 
 // Empty setup and teardown so compiler doesn't get mad
 void setUp() {}
@@ -14,6 +8,8 @@ void tearDown() {}
 
 int main(void) {
     UNITY_BEGIN();
+
+    TEST_MESSAGE("Note: line numbers for failed tests correspond to the file the test is defined in, not main.c like the message says");
 
     // Unit tests for test infrastructure
     RUN_TEST(test_uart);

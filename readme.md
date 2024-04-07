@@ -39,7 +39,7 @@ To add a new unit test:
 
 * Write the test in a file starting with `test_` in the `test` directory (ex: `test/test_commands.c`)
 * In `test/CMakeLists.txt`, add the .c file to the `add_executables` function, with all the other unit test files
-* In `test/main.c`, add a function declaration for the test function at the top and then call the function with `RUN_TEST(test_function)`
+* In `test/tests.c`, add a function declaration for the test function at the top and then call the function in `test/main.c` with `RUN_TEST(test_function)`
 
 [Unit test assertion cheat sheet](https://github.com/ThrowTheSwitch/Unity/blob/master/docs/UnityAssertionsCheatSheetSuitableforPrintingandPossiblyFraming.pdf)
 
