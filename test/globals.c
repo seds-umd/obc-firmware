@@ -1,6 +1,8 @@
 #include "hardware/dma.h"
 #include "pico/time.h"
 
+#include "misc.h"
+
 // This file contains definitions of global variables for mock hardware
 
 // dma.h

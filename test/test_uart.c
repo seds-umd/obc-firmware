@@ -11,7 +11,7 @@ void test_uart() {
     srand(0x58209348);
 
     // Relatively small buffer to keep things simple
-    uart_sim_init(uart0, BUF_SIZE);
+    uart_sim_init(&uart0, BUF_SIZE);
     uint8_t buf[BUF_SIZE];
 
     // Repeat test a bunch of times
@@ -28,7 +28,7 @@ void test_uart() {
         }
 
         // Send data
-        uart_sim_send(buf, count);
+        uart_sim_send(uart0, buf, count);
 
         // Receive and check data
         uint8_t rx_buf[BUF_SIZE];
@@ -38,9 +38,9 @@ void test_uart() {
         }
 
         TEST_ASSERT_EQUAL_UINT8_ARRAY(buf, rx_buf, count);
-        TEST_ASSERT_EQUAL(0, uart_sim_rx_buf_size());
+        TEST_ASSERT_EQUAL(0, uart_sim_rx_buf_size(uart0));
         TEST_ASSERT_EQUAL(false, uart_is_readable(uart0));
     }
 
-    uart_sim_deinit();
+    uart_sim_deinit(uart0);
 }

@@ -9,7 +9,9 @@ void tearDown() {}
 int main(void) {
     UNITY_BEGIN();
 
-    TEST_MESSAGE("Note: line numbers for failed tests correspond to the file the test is defined in, not main.c like the message says");
+    TEST_MESSAGE(
+        "Note: line numbers for failed tests correspond to the file the test "
+        "is defined in, not main.c like the message says");
 
     // Unit tests for test infrastructure
     RUN_TEST(test_uart);

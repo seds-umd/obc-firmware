@@ -15,7 +15,7 @@
 static int sum1, sum2, count1, count2;
 
 static int command1(packet_t *pkt) {
-    for (unsigned int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+    for (uint i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
         sum1 += pkt->lst_pkt->pld.buf[i];
         count1++;
     }
@@ -24,7 +24,7 @@ static int command1(packet_t *pkt) {
 }
 
 static int command2(packet_t *pkt) {
-    for (unsigned int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+    for (uint i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
         sum2 += pkt->lst_pkt->pld.buf[i];
         count2++;
     }
@@ -71,7 +71,7 @@ void test_openlst() {
     int count1_ref = 0;
     int count2_ref = 0;
 
-    uart_sim_init(uart0, 2048);
+    uart_sim_init(&uart0, 2048);
 
     command_init();
     command_register(0x00, command1);
@@ -101,10 +101,10 @@ void test_openlst() {
 
         uint8_t *pkt = make_packet(0x1234, i, 0x01, 0x11, pld, pld_len);
 
-        uart_sim_send(pkt, pld_len + 9);
+        uart_sim_send(uart0, pkt, pld_len + 9);
 
         // Feed all bytes in
-        while (uart_sim_rx_buf_size() > 0) {
+        while (uart_sim_rx_buf_size(uart0) > 0) {
             openlst_uart_isr();
         }
 
@@ -122,5 +122,5 @@ void test_openlst() {
     }
 
     openlst_deinit();
-    uart_sim_deinit();
+    uart_sim_deinit(uart0);
 }
