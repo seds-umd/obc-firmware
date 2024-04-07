@@ -34,6 +34,9 @@ uint uart_sim_rx_buf_size();
 // Get UART byte
 uint8_t uart_sim_get(uart_inst_t uart);
 
+// Send UART byte
+void uart_putc_raw(uart_inst_t *uart, char c);
+
 ////////// Simulated sdk functions //////////
 
 // Returns true if data in buffer

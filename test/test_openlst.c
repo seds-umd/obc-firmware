@@ -15,7 +15,7 @@
 static int sum1, sum2, count1, count2;
 
 static int command1(packet_t *pkt) {
-    for (int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+    for (unsigned int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
         sum1 += pkt->lst_pkt->pld.buf[i];
         count1++;
     }
@@ -24,7 +24,7 @@ static int command1(packet_t *pkt) {
 }
 
 static int command2(packet_t *pkt) {
-    for (int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
+    for (unsigned int i=1; i<(pkt->lst_pkt->len - OPENLST_HEADER_SIZE); i++) {
         sum2 += pkt->lst_pkt->pld.buf[i];
         count2++;
     }
@@ -121,5 +121,6 @@ void test_openlst() {
         TEST_ASSERT_EQUAL_INT_MESSAGE(sum2_ref, sum2, str_buf);
     }
 
+    openlst_deinit();
     uart_sim_deinit();
 }

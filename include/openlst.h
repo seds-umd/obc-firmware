@@ -13,6 +13,13 @@
 void openlst_init();
 
 /**
+ * @brief Frees memory allocated in openlst_init.
+ * 
+ * Only expected to be used in unit tests to prevent memory leaks.
+ */
+void openlst_deinit();
+
+/**
  * @brief UART RX interrupt service routine.
  * 
  * Grabs bytes from UART and stores them in a buffer for later processing.

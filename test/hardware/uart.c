@@ -65,6 +65,11 @@ uint8_t uart_sim_get(uart_inst_t uart) {
     }
 }
 
+void uart_putc_raw(uart_inst_t *uart, char c) {
+    UNUSED(uart);
+    UNUSED(c);
+}
+
 ////////// Simulated sdk functions //////////
 
 bool uart_is_readable(uart_inst_t uart) {

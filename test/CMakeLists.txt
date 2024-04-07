@@ -46,6 +46,7 @@ target_compile_options(tests PRIVATE
     -Wall
     -Wextra
     -ggdb3
+    -O0 # TODO: make it not break on higher optimization levels
     # -fanalyzer # Not available on GCC 9
 )
 

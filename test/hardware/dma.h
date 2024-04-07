@@ -19,6 +19,12 @@ typedef struct {
     uint32_t ctrl;
 } dma_channel_config;
 
+typedef struct {
+    volatile uint32_t ints0;
+} dma_hw_t;
+
+extern dma_hw_t *dma_hw;
+
 enum dma_channel_transfer_size {
     DMA_SIZE_8 = 0,    ///< Byte transfer (8 bits)
     DMA_SIZE_16 = 1,   ///< Half word transfer (16 bits)
@@ -76,4 +82,22 @@ static inline void dma_channel_configure(unsigned int channel,
 static inline void dma_channel_set_irq0_enabled(unsigned int channel, bool enabled) {
     UNUSED(channel);
     UNUSED(enabled);
+}
+
+static inline void dma_channel_set_trans_count(unsigned int channel, uint32_t trans_count, bool trigger) {
+    UNUSED(channel);
+    UNUSED(trans_count);
+    UNUSED(trigger);
+}
+
+static inline void dma_channel_set_read_addr(unsigned int channel, const volatile void *read_addr, bool trigger) {
+    UNUSED(channel);
+    UNUSED(read_addr);
+    UNUSED(trigger);
+}
+
+static inline bool dma_channel_is_busy(unsigned int channel) {
+    UNUSED(channel);
+
+    return false;
 }
