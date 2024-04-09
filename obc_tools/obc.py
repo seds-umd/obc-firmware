@@ -197,7 +197,7 @@ class Flash:
 
     def erase_32k(self, addr: int):
         assert addr >= 0 and addr < 2**24
-        
+
         msg = bytearray()
         msg.append(0x02)
         msg.extend(pack_cint(addr, 4, False)[0:3])
@@ -221,6 +221,7 @@ class Flash:
         id = unpack_cint(reply["data"][2:10], 8, False)
 
         return id
+
 
 class Obc(LstHandler):
     def __init__(
@@ -269,6 +270,10 @@ class Obc(LstHandler):
         reply: Packet = self.obc_cmd(ObcCmds.TELEM_REQ, resp=True)
 
         return Telemetry.decode(reply["data"][1:])
+
+    def power_cycle_openlst(self):
+        self.obc_cmd(ObcCmds.OPENLST_PWR)
+
 
 if __name__ == "__main__":
     import click

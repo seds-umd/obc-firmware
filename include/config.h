@@ -4,7 +4,8 @@
 #include "hardware/spi.h"
 #include "hardware/uart.h"
 
-// WARNING: current pinouts are for debugging, must change for actual OBC hardware
+// WARNING: current pinouts are for debugging, must change for actual OBC
+// hardware
 
 ////////// UART //////////
 
@@ -25,6 +26,9 @@
 // TX buffer count must be <=32 because status is stored as uint32_t bitmask
 #define OPENLST_TX_BUF_COUNT 4
 
+// 2s delay on power cycle before setting pin back to default
+#define OPENLST_POWER_CYCLE_DELAY_US 2000 * 1000
+
 ////////// DATA FLASH //////////
 
 #define DATA_FLASH_SPI spi0
@@ -34,10 +38,12 @@
 #define DATA_FLASH_TX 3
 
 // TODO: figure out how to make faster
-#define DATA_FLASH_BAUD 125000000/4
+#define DATA_FLASH_BAUD 125000000 / 4
 
-////////// PINOUTS //////////
+////////// GPIO //////////
 
+#define ANTENNA_DEPLOY_PIN 16
+#define OPENLST_PWR_PIN 17
 #define DEBUG_PIN 19
 
 ////////// SETTINGS //////////

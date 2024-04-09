@@ -5,6 +5,7 @@ class ObcCmds:
     REBOOT = 0x03
     TELEM_REQ = 0x10
     TELEM_RESP = 0x11
+    OPENLST_PWR = 0x40
     GPIO = 0x80
     GPIO_STATE = 0x81
     FLASH_CMD = 0xA0

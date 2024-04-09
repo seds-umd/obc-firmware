@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "macros.h"
 #include "openlst.h"
+#include "openlst_driver.h"
 
 #include "hardware/gpio.h"
 #include "hardware/watchdog.h"
@@ -18,6 +19,7 @@ static int command_reboot(packet_t *pkt);
 static int command_gpio(packet_t *pkt);
 static int command_flash(packet_t *pkt);
 static int command_telem(packet_t *pkt);
+static int command_openlst_pwr(packet_t *pkt);
 
 void command_setup() {
     command_init();
@@ -28,6 +30,9 @@ void command_setup() {
 
     // Telemetry
     command_register(0x10, command_telem);
+
+    // Control commands
+    command_register(0x40, command_openlst_pwr);
 
     // Hardware
     command_register(0x80, command_gpio);
@@ -216,6 +221,14 @@ static int command_telem(packet_t *pkt) {
     memcpy(&reply->pld.gnd_cmd.msg.telem, telem, sizeof(*telem));
 
     openlst_tx(reply);
+
+    return 0;
+}
+
+static int command_openlst_pwr(packet_t *pkt) {
+    UNUSED(pkt);
+
+    openlst_power_cycle();
 
     return 0;
 }

@@ -4,6 +4,7 @@
 #include "flash.h"
 #include "logging.h"
 #include "openlst.h"
+#include "openlst_driver.h"
 #include "scheduler.h"
 #include "telemetry.h"
 
@@ -24,6 +25,8 @@ int main() {
     gpio_set_dir(DEBUG_PIN, true);
     gpio_put(DEBUG_PIN, false);
 
+    openlst_driver_init();
+
     flash_setup(DATA_FLASH_CS);
     openlst_init();
 
@@ -36,6 +39,10 @@ int main() {
 
     // Update telemetry every second
     scheduler_add_task(telem_update, 1 * 1000 * 1000);
+
+    // Set to 1s for now, if this needs to do anything more complicated we can
+    // decrease this
+    scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
 
     command_setup();
 

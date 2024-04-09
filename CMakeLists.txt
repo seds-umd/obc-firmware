@@ -26,6 +26,7 @@ add_executable(obc_fw
     src/logging.c
     src/main.c
     src/openlst.c
+    src/openlst_driver.c
     src/scheduler.c
     src/telemetry.c
 
