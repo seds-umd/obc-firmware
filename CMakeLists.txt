@@ -30,7 +30,7 @@ add_executable(obc_fw
     src/scheduler.c
 
     # External source files
-    #external/littlefs/lfs.c
+    external/littlefs/lfs.c
 )
 
 pico_enable_stdio_usb(obc_fw 1)
