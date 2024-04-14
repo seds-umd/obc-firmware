@@ -84,31 +84,33 @@ void read_temp(int channel)
 
 float read_and_convert(uint8_t amux_input) {
      
+     const uint32_t conversion_factor = 3.3f / (1 << 12);
+
     set_select(amux_input);
     //selecting which pin from amux to read from
-
+    
     uint16_t result = adc_read();
 
 
     // this block is for when reading from voltage sensors
-    if (amux_input == 4 || amux_input == 23 || amux_input == 5) {  
+    if (amux_input == 4 || amux_input == 8 || amux_input == 5) {  
         
-        const float conversion_factor = 3.3f / (1 << 12);
+        
         return result * conversion_factor;
     }
 
 
     // this block is for when reading from current sensors
-    if (amux_input == 9 || amux_input == 8 || amux_input == 22 ||
-        amux_input == 21) {
+    if (amux_input == 0 || amux_input == 1 || amux_input == 9 ||
+        amux_input == 10) {
              
-        // output of some sort
+        return getOutputCurrent((result * conversion_factor), amux_input);
     }
 
 
-   // this block is for when reading from temperature senesors
-    if (amux_input == 7 || amux_input == 6 ||
-        (amux_input <= 20 && amux_input >= 16)) {
+    // this block is for when reading from temperature senesors
+    if (amux_input == 2 || amux_input == 3 ||
+        (amux_input <= 15 && amux_input >= 11)) {
          
         const float B = 3435;
         const float R0 = 10000;
@@ -120,3 +122,17 @@ float read_and_convert(uint8_t amux_input) {
 
     return -1.0;
 }
+
+float getOutputCurrent(uint32_t outputVoltage, int pinNo) {
+      float senseRes = -1;
+      if (pinNo == 0) {
+            senseRes = 0.1;
+      } else if (pinNo == 1) {
+            senseRes = 0.25;
+      } else if (pinNo == 9) {
+            senseRes = 0.25;
+      } else if (pinNo == 10) {
+            senseRes = 0.02;
+      }
+      return outputVoltage / (100 * senseRes);
+ }
