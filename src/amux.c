@@ -81,3 +81,37 @@ void read_temp(int channel)
     float T = 1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15;
     log_fmt("temp at channel %d: (volt) %f, (final) %f", channel, out, T);
 }
+
+float read_and_convert(uint8_t amux_input) {
+     
+    const float conversion_factor = 3.3f / (1 << 12);
+     
+    set_select(amux_input);
+    //selecting which pin from amux to read from
+
+    uint16_t result = adc_read();
+
+
+    // this block is for when reading from voltage sensors
+    if (amux_input == 4 || amux_input == 23 || amux_input == 5) {  
+        return result * conversion_factor;
+    }
+
+
+    // this block is for when reading from current sensors
+    if (amux_input == 9 || amux_input == 8 || amux_input == 22 ||
+        amux_input == 21) {
+             
+        // output of some sort
+    }
+
+
+   // this block is for when reading from temperature senesors
+    if (amux_input == 7 || amux_input == 6 ||
+        (amux_input <= 20 && amux_input >= 16)) {
+         
+        // output of some sort
+    }  
+    
+    return -1.0;
+}
