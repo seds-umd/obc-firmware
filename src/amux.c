@@ -84,8 +84,6 @@ void read_temp(int channel)
 
 float read_and_convert(uint8_t amux_input) {
      
-    const float conversion_factor = 3.3f / (1 << 12);
-     
     set_select(amux_input);
     //selecting which pin from amux to read from
 
@@ -94,6 +92,8 @@ float read_and_convert(uint8_t amux_input) {
 
     // this block is for when reading from voltage sensors
     if (amux_input == 4 || amux_input == 23 || amux_input == 5) {  
+        
+        const float conversion_factor = 3.3f / (1 << 12);
         return result * conversion_factor;
     }
 
@@ -110,8 +110,13 @@ float read_and_convert(uint8_t amux_input) {
     if (amux_input == 7 || amux_input == 6 ||
         (amux_input <= 20 && amux_input >= 16)) {
          
-        // output of some sort
+        const float B = 3435;
+        const float R0 = 10000;
+        const float T0 = 273.15 + 25; // kelvin
+        float R = result * R0 / (3.3 - result);
+
+        return 1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15;
     }  
-    
+
     return -1.0;
 }
