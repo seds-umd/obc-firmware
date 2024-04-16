@@ -82,21 +82,21 @@ void read_temp(int channel)
     log_fmt("temp at channel %d: (volt) %f, (final) %f", channel, out, T);
 }
 
-float read_and_convert(uint8_t amux_input) {
+uint16_t read_and_convert(uint8_t amux_input) {
      
-     const uint32_t conversion_factor = 3.3f / (1 << 12);
+     const float conversion_factor = 3.3f / (1 << 12);
 
     set_select(amux_input);
     //selecting which pin from amux to read from
     
     uint16_t result = adc_read();
-
+    uint16_t voltage_in_mv = ((float)result * conversion_factor * 1000);
 
     // this block is for when reading from voltage sensors
     if (amux_input == 4 || amux_input == 8 || amux_input == 5) {  
         
         
-        return result * conversion_factor;
+        return voltage_in_mv;
     }
 
 
@@ -104,7 +104,7 @@ float read_and_convert(uint8_t amux_input) {
     if (amux_input == 0 || amux_input == 1 || amux_input == 9 ||
         amux_input == 10) {
              
-        return getOutputCurrent((result * conversion_factor), amux_input);
+        return getOutputCurrent((voltage_in_mv), amux_input);
     }
 
 
@@ -115,24 +115,13 @@ float read_and_convert(uint8_t amux_input) {
         const float B = 3435;
         const float R0 = 10000;
         const float T0 = 273.15 + 25; // kelvin
-        float R = result * R0 / (3.3 - result);
-
-        return 1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15;
+        float out = result * 3.3 / (1 << 12);
+        float R = out * R0 / (3.3 - out);
+    
+        return (1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15) * 100;
     }  
 
     return -1.0;
 }
 
-float getOutputCurrent(uint32_t outputVoltage, int pinNo) {
-      float senseRes = -1;
-      if (pinNo == 0) {
-            senseRes = 0.1;
-      } else if (pinNo == 1) {
-            senseRes = 0.25;
-      } else if (pinNo == 9) {
-            senseRes = 0.25;
-      } else if (pinNo == 10) {
-            senseRes = 0.02;
-      }
-      return outputVoltage / (100 * senseRes);
- }
+
