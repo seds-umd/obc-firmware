@@ -35,19 +35,19 @@ Much of the space in the program header and update header is reserved and unused
 | ------ | ------ | ---- | ----------- |
 | 0x0000 | 0x0003 | 4 B  | Size        |
 | 0x0004 | 0x0007 | 4 B  | CRC32       |
-| 0x0008 | 0x0FFD | ...  | Reserved    |
-| 0x0FFE | 0x0FFF | 1 B  | Valid       |
+| 0x0008 | 0x0FFE | ...  | Reserved    |
+| 0x0FFF | 0x0FFF | 1 B  | Valid       |
 
 ### Update Header
 
 | Start  | End    | Size | Description   |
 | ------ | ------ | ---- | ------------- |
-| 0x0000 | 0x0003 | 4 B  | CRC32         |
-| 0x0004 | 0x0007 | 4 B  | Size          |
+| 0x0000 | 0x0003 | 4 B  | Size          |
+| 0x0004 | 0x0007 | 4 B  | CRC32         |
 | 0x0008 | 0x03FF | ...  | Reserved      |
 | 0x0400 | 0x07FF | 1 kB | Update status |
-| 0x0800 | 0x0FFD | ...  | Reserved      |
-| 0x0FFE | 0x0FFF | 1 B  | Valid         |
+| 0x0800 | 0x0FFE | ...  | Reserved      |
+| 0x0FFF | 0x0FFF | 1 B  | Valid         |
 
 In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 1024 bytes * 8 bits/byte * 128 bytes/bit = 1 MB.
 
@@ -57,13 +57,14 @@ In the update status, each bit corresponds to a half page (128 bytes) in the upd
    1. Erase update staging slot
    2. Erase update header
    3. Populate header with size, CRC
-2. Receive update packets, each containing a 128 byte chunk and corresponding address (with address 0 being the start of the image, not the flash address 0)
+2. Ground requests status to see if update initialization was successful
+3. Receive update packets, each containing a 128 byte chunk and corresponding address (with address 0 being the start of the image, not the flash address 0)
    1. Chunks are 128 byte aligned and addresses have bottom 7 bits truncated (because they will always be 0)
    2. Chunk is written to flash and read back to verify
    3. Set bit in update status to confirm that update is written successfully
-3. After all chunks are sent, a status check will be requested
+4. After all chunks are sent, a status check will be requested
    1. Status check returns whether CRC of update matches, how many half pages are unwritten, and a list of addresses of half pages that are unwritten. The list of addresses may be larger than the available space in the packet, so a subset is returned. Subsequent status checks will return the next N addresses, and the list will overflow back to 0 when the end is reached. No assumptions can be made about the ordering of addresses other than that they will be unique within a single status packet.
-4. Receive command to apply update
+5. Receive command to apply update
    1. Send ACK confirming update will be applied. After this, no further packets will be sent and no received packets will be processed until the update is applied.
    2. All subsequent steps will run in a function stored in RAM and with interrupts turned off because no external events will be more important than finishing the update.
    3. Erase application slot and header

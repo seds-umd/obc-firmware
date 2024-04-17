@@ -151,10 +151,11 @@ Requests the status of an ongoing update.
 | CHUNK_ADDR[N]    | 2N   |
 
 UPDATE_STATUS can have the following values:
-* 0: no update in progress
-* 1: update partially complete
-* 2: update ready to be applied (all chunks written and CRC matches)
-* 3: CRC mismatch (but all chunks written)
+* 0: updater idle, no update in progress
+* 1: updater initializing, do not send chunks yet
+* 2: updater waiting for chunks to be sent
+* 3: update ready to be applied (all chunks written and CRC matches)
+* 4: CRC mismatch (but all chunks written)
 * 255: unknown/other error
 
 CRC_EXPECTED is the value of the CRC stored in the program header. This can be used to validate that both sides are looking at the same image.

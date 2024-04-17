@@ -60,6 +60,24 @@ typedef union {
     } flash_cmd;
 
     struct telem_struct telem;
+
+    struct {
+        uint32_t crc32;
+        uint32_t size;
+    } update_init;
+
+    struct {
+        uint16_t addr;
+        uint8_t data[128];
+    } update_chunk;
+
+    struct {
+        uint8_t update_status;
+        uint8_t crc_matched;
+        uint32_t crc_expected;
+        uint16_t chunks_remaining;
+        uint16_t chunk_addr[];  // flexible size array
+    } update_status;
 } command_t;
 
 ////////// OpenLST Packets //////////
