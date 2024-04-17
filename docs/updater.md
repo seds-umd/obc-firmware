@@ -1,15 +1,26 @@
 # Updater/Bootloader Specification
 
+## File Structure
+
+WIP, but general idea is:
+
+* CMakeLists.txt configured to produce both a bootloader and application image
+* Bootloader and application share some code (settings, drivers, etc), but kept to a minimum
+* `bl_main.c` file contains bootloader main function
+  * `bl_` files indicate it's only used in the bootloader (except `bl_common.h` which is specifically for things that need to be shared between bootloader and application)
+
 ## Flash Layout
 
 Page size is 256 bytes, min erase size is 4 kB.
+
+When changing the flash layout, also update `bl_common.h`.
 
 | Start       | End         | Size     | Access | Description                |
 | ----------- | ----------- | -------- | ------ | -------------------------- |
 | 0x0000_0000 | 0x0000_00FF | 256 B    | R      | boot2, pico-sdk bootloader |
 | 0x0000_0100 | 0x0000_3FFF | 15.75 kB | RX     | Our bootloader             |
 | 0x0000_4000 | 0x0000_4FFF | 4 kB     | RW     | Program header             |
-| 0x0000_5000 | 0x0000_5FFF | 4 kB     | RW     | Update header            |
+| 0x0000_5000 | 0x0000_5FFF | 4 kB     | RW     | Update header              |
 | 0x0000_6000 | 0x000F_FFFF | 1000 kB  | RW     | Misc config data           |
 | 0x0010_0000 | 0x001F_FFFF | 1024 kB  | RWX    | Application slot           |
 | 0x0020_0000 | 0x002F_FFFF | 1024 kB  | RW     | Update staging slot        |
@@ -20,37 +31,32 @@ Much of the space in the program header and update header is reserved and unused
 
 ### Program Header
 
-* CRC and size of currently loaded application image
-
 | Start  | End    | Size | Description |
 | ------ | ------ | ---- | ----------- |
 | 0x0000 | 0x0003 | 4 B  | Size        |
 | 0x0004 | 0x0007 | 4 B  | CRC32       |
 | 0x0008 | 0x0FFD | ...  | Reserved    |
-| 0x0FFE | 0x0FFF | 1 B | Valid |
+| 0x0FFE | 0x0FFF | 1 B  | Valid       |
 
-### Update Hetadata
-
-Addresses are relative to the start of the 
+### Update Header
 
 | Start  | End    | Size | Description   |
 | ------ | ------ | ---- | ------------- |
-| 0x0000 | 0x0013 | 20 B | Git hash      |
-| 0x0014 | 0x0017 | 4 B  | CRC32         |
-| 0x0018 | 0x001B | 4 B  | Size          |
-| 0x001C | 0x03FF | ...  | Reserved      |
+| 0x0000 | 0x0003 | 4 B  | CRC32         |
+| 0x0004 | 0x0007 | 4 B  | Size          |
+| 0x0008 | 0x03FF | ...  | Reserved      |
 | 0x0400 | 0x07FF | 1 kB | Update status |
-| 0x0800 | 0x0FFD | ...  | Reserved |
-| 0x0FFE | 0x0FFF | 1 B | Valid |
+| 0x0800 | 0x0FFD | ...  | Reserved      |
+| 0x0FFE | 0x0FFF | 1 B  | Valid         |
 
 In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 1024 bytes * 8 bits/byte * 128 bytes/bit = 1 MB.
 
 ## Update Process
 
-1. Receive update initialization command (includes size, CRC, git hash)
+1. Receive update initialization command (includes size, CRC)
    1. Erase update staging slot
    2. Erase update header
-   3. Populate header with size, CRC, git hash
+   3. Populate header with size, CRC
 2. Receive update packets, each containing a 128 byte chunk and corresponding address (with address 0 being the start of the image, not the flash address 0)
    1. Chunks are 128 byte aligned and addresses have bottom 7 bits truncated (because they will always be 0)
    2. Chunk is written to flash and read back to verify
@@ -93,7 +99,7 @@ Several potential faults result in the need to restart the entire update process
 
 Design philosophy
 * Simple as possible
-* No DMA, scheduling, any complex functionality
+* Don't use DMA, scheduling, any complex functionality - robustness is more important than performance
 
 ### Function
 
@@ -102,4 +108,11 @@ Design philosophy
 * If application code is invalid, attempt to complete update copying process. If this fails, tell PIB that we need a new image. PIB will upload new image to complete the update process.
 * PIB recovery process will write directly to the application slot because there's no point in using the update slot, but will still use the CRC check and valid byte in the program header
 
-TODO: valid byte indicate whether it's in the middle of a normal update or a PIB update
+TODO: valid byte to indicate whether it's in the middle of a normal update or a PIB update
+
+## Misc Notes
+
+* CRC32 uses IEEE802.3 polynomial (so it can use the CRC hardware in the RP2040 DMA) - 0x04C11DB7 initialized to all 1s
+* Before starting the update process, zeros are appended to the end of the image to align it to 128 bytes. This means there will be no half filled chunks and simplifies everything.
+* 8192 chunks to fill a slot - addresses must be 16 bits
+* Flash erases and programs will block and prevent access to flash. Any interrupts must be executed from RAM and not access any flash.
