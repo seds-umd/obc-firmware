@@ -26,7 +26,7 @@ Planned but not yet implemented format changes
 Command authentication support:
 
 | Field   | Size |
-|---------|------|
+| ------- | ---- |
 | Hash    | 32   |
 | Counter | 4    |
 | Unused  | 3    |
@@ -40,7 +40,7 @@ Command authentication support:
 For each command format, an OPCODE field is implied at the start, for example:
 
 | Field            | Size |
-|------------------|------|
+| ---------------- | ---- |
 | OPCODE           | 1    |
 | *rest of packet* | N    |
 
@@ -51,7 +51,7 @@ The sizes listed for commands are the total sizes, including the opcode but not 
 ### 0x00 - ACK
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | NACK  | 1    |
 
 If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is sent after a command is successful and NACK if unsuccessful.
@@ -59,7 +59,7 @@ If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is 
 ### 0x01 - PING
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | DATA  | N    |
 
 If a ping is received, the receiver will respond with an ACK message that has the same sequence ID. The rest of contents of the message will be repeated with no changes.
@@ -67,7 +67,7 @@ If a ping is received, the receiver will respond with an ACK message that has th
 ### 0x02 - MSG
 
 | Field   | Size |
-|---------|------|
+| ------- | ---- |
 | LEVEL   | 1    |
 | MESSAGE | N    |
 
@@ -88,7 +88,7 @@ Message is empty.
 ### 0x11 - TELEM_RESP
 
 | Field           | Size |
-|-----------------|------|
+| --------------- | ---- |
 | UPTIME_MS       | 4    |
 | TELEM_AGE_MS    | 2    |
 | V_MB_BATT_MV    | 2    |
@@ -106,11 +106,64 @@ Message is empty.
 | T_OBC1_CC       | 2    |
 | T_RP2040_CC     | 2    |
 | T_CC1110_CC     | 2    |
-| ... | ... |
+| ...             | ...  |
 
 UPTIME_MS is the number of milliseconds since boot. TELEM_AGE_MS is the number of milliseconds since the telemetry was updated, ie UPTIME_MS(now) - UPTIME_MS(telem updated). UPTIME_MS(now) is measured when the response packet is being assembled, and UPTIME_MS(telem updated) is updated when the telemetry packet is updated.
 
 Field name prefix indicated type: V_ means voltage, I_ means current, T_ means temperature. Suffix indicates units: _MS is milliseconds, _MV is millivolts, _MA is milliamps, _CC is centiCelsius.
+
+### 0x30 - UPDATE_INIT
+
+Starts update process and populates metadata. Responds with an ACK when ready to start updating.
+
+| Field | Size |
+| ----- | ---- |
+| CRC32 | 4    |
+| SIZE  | 4    |
+
+CRC32 is the CRC of the update image.
+
+SIZE is the size in bytes of the image. Size must be a multiple of 128.
+
+### 0x31 - UPDATE_CHUNK
+
+| Field | Size |
+| ----- | ---- |
+| ADDR  | 2    |
+| DATA  | 128  |
+
+ADDR is the address of the chunk within the image. The bottom 7 bits of the address are not included because they are always 0.
+
+DATA is the chunk of data containing a small section of the update image.
+
+### 0x32 - UPDATE_STATUS_REQ
+
+Requests the status of an ongoing update.
+
+### 0x33 - UPDATE_STATUS
+
+| Field            | Size |
+| ---------------- | ---- |
+| UPDATE_STATUS    | 1    |
+| CRC_MATCH        | 1    |
+| CRC_EXPECTED     | 4    |
+| CHUNKS_REMAINING | 2    |
+| CHUNK_ADDR[N]    | 2N   |
+
+UPDATE_STATUS can have the following values:
+* 0: no update in progress
+* 1: update partially complete
+* 2: update ready to be applied (all chunks written and CRC matches)
+* 3: CRC mismatch (but all chunks written)
+* 255: unknown/other error
+
+CRC_EXPECTED is the value of the CRC stored in the program header. This can be used to validate that both sides are looking at the same image.
+
+CRC_MATCH is 1 if the calculated CRC of the update matches the expected CRC, and 0 otherwise.
+
+CHUNKS_REMAINING is the number of chunks that have not yet been written to. If no chunks have been written yet, this will be SIZE/128. It will never be greater than that value. When the entire update has been received, this will be 0.
+
+CHUNK_ADDR[N] is a list of addresses of chunks that still need to be written to. The lower 7 bits of the address are not included because chunks will always be aligned to 128 bytes. Addresses start at 0 for the start of the update slot.
 
 ### 0x40 - OPENLST_PWR
 
@@ -118,9 +171,9 @@ Power cycles OpenLST. Message has no contents. After power cycle an ACK will be 
 
 ### 0x41 - ANT_CMD
 
-| Field  | Size |
-| ------ | ---- |
-| MAGIC  | 8    |
+| Field | Size |
+| ----- | ---- |
+| MAGIC | 8    |
 
 Activate antenna deployment mechanism.
 
@@ -129,7 +182,7 @@ The MAGIC field a string of bytes used to provide extra assurance that the comma
 ### 0x80 - GPIO
 
 | Field  | Size |
-|--------|------|
+| ------ | ---- |
 | PIN    | 4    |
 | PIN_OP | 1    |
 
@@ -150,7 +203,7 @@ TODO: other pin features (like pullup/pulldown)
 ### 0x81 - GPIO_STATE
 
 | Field     | Size |
-|-----------|------|
+| --------- | ---- |
 | PIN_MODE  | 4    |
 | PIN_STATE | 4    |
 
@@ -163,7 +216,7 @@ PIN_STATE is the actual state of the pin, regardless of whether it's an input or
 ### 0x82 - ADC_START
 
 | Field   | Size |
-|---------|------|
+| ------- | ---- |
 | CHANNEL | 1    |
 
 Initiates an ADC read. CHANNEL is a bit field to select which channel to measure, ie 0b00000011 selects channels 0 and 1. There are 5 ADC channels total (4 external inputs and 1 internal temperature sensor), see RP2040 datasheet for details.
@@ -173,7 +226,7 @@ An ADC_READING packet will be returned with the results of the conversion.
 ### 0x83 - ADC_READING
 
 | Field     | Size |
-|-----------|------|
+| --------- | ---- |
 | DATA[i]   | 2    |
 | DATA[i+1] | 2    |
 | ...       | ...  |
@@ -183,7 +236,7 @@ Results of an ADC reading. The DATA field is repeated depending on how many chan
 ### 0xA0 - FLASH_CMD
 
 | Field    | Size     |
-|----------|----------|
+| -------- | -------- |
 | CMD      | 1        |
 | *Varies* | *Varies* |
 
@@ -204,7 +257,7 @@ The subsections below describe the message contents for each specific operation.
 Size: 6
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | ADDR  | 3    |
 | SIZE  | 1    |
 
@@ -215,7 +268,7 @@ The READ operation performs a flash read and returns the data received. The ADDR
 Size: 5 + N
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | ADDR  | 3    |
 | DATA  | N    |
 
@@ -228,7 +281,7 @@ For example, a program operation starting at 0x0F0 and containing 0x20 bytes wil
 Size: 6
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | ADDR  | 3    |
 | SIZE  | 1    |
 
@@ -246,7 +299,7 @@ Returns the flash unique ID.
 ### 0xA1 - FLASH_RESP
 
 | Field    | Size |
-|----------|------|
+| -------- | ---- |
 | CMD_RESP | 1    |
 
 CMD_RESP can be:
@@ -258,7 +311,7 @@ CMD_RESP can be:
 Size: 2 + N
 
 | Field | Size |
-|-------|------|
+| ----- | ---- |
 | DATA  | N    |
 
 #### 0x01 - UNIQUE_ID Response
@@ -266,5 +319,5 @@ Size: 2 + N
 Size: 10
 
 | Field     | Size |
-|-----------|------|
+| --------- | ---- |
 | UNIQUE_ID | 8    |
