@@ -102,6 +102,10 @@ void openlst_init() {
     tx_seq = get_rand_32();
 }
 
+void openlst_deinit() {
+    queue_free(&tx_buf_queue);
+}
+
 void openlst_uart_isr() {
     while (uart_is_readable(OPENLST_UART_ID)) {
         // Access register directly to speed things up

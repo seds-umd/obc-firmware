@@ -2,6 +2,7 @@
 
 #include "misc.h"
 #include "macros.h"
+
 #include <stdbool.h>
 
 #define UART0_IRQ 0

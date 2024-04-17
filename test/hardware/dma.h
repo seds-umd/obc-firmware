@@ -6,10 +6,13 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <stdbool.h>
-#include <stdint.h>
+#pragma once
 
 #include "macros.h"
+#include "misc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define DREQ_UART0_TX 0
 #define DREQ_UART1_TX 0
@@ -18,6 +21,12 @@
 typedef struct {
     uint32_t ctrl;
 } dma_channel_config;
+
+typedef struct {
+    volatile uint32_t ints0;
+} dma_hw_t;
+
+extern dma_hw_t *dma_hw;
 
 enum dma_channel_transfer_size {
     DMA_SIZE_8 = 0,    ///< Byte transfer (8 bits)
@@ -54,16 +63,16 @@ static inline void channel_config_set_read_increment(dma_channel_config *c, bool
     UNUSED(incr);
 }
 
-static inline void channel_config_set_dreq(dma_channel_config *c, unsigned int dreq) {
+static inline void channel_config_set_dreq(dma_channel_config *c, uint dreq) {
     UNUSED(c);
     UNUSED(dreq);
 }
 
-static inline void dma_channel_configure(unsigned int channel,
+static inline void dma_channel_configure(uint channel,
                         const dma_channel_config *config,
                         volatile void *write_addr,
                         const volatile void *read_addr,
-                        unsigned int transfer_count,
+                        uint transfer_count,
                         bool trigger) {
     UNUSED(channel);
     UNUSED(config);
@@ -73,7 +82,25 @@ static inline void dma_channel_configure(unsigned int channel,
     UNUSED(trigger);
 }
 
-static inline void dma_channel_set_irq0_enabled(unsigned int channel, bool enabled) {
+static inline void dma_channel_set_irq0_enabled(uint channel, bool enabled) {
     UNUSED(channel);
     UNUSED(enabled);
+}
+
+static inline void dma_channel_set_trans_count(uint channel, uint32_t trans_count, bool trigger) {
+    UNUSED(channel);
+    UNUSED(trans_count);
+    UNUSED(trigger);
+}
+
+static inline void dma_channel_set_read_addr(uint channel, const volatile void *read_addr, bool trigger) {
+    UNUSED(channel);
+    UNUSED(read_addr);
+    UNUSED(trigger);
+}
+
+static inline bool dma_channel_is_busy(uint channel) {
+    UNUSED(channel);
+
+    return false;
 }

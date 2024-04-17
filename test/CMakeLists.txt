@@ -2,6 +2,8 @@ project("OBC Tests" C)
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_BUILD_TYPE Debug)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set up unity library
 add_library(unity STATIC
     ../external/Unity/src/unity.c
@@ -46,6 +48,7 @@ target_compile_options(tests PRIVATE
     -Wall
     -Wextra
     -ggdb3
+    -O0 # TODO: make it not break on higher optimization levels
     # -fanalyzer # Not available on GCC 9
 )
 
