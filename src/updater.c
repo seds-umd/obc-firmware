@@ -96,6 +96,7 @@ void updater_process() {
         case UPDATER_INIT:
             if (updater_try_init() == 1) {
                 state = UPDATER_WAITING;
+                // TODO: send ACK here
             }
             break;
 

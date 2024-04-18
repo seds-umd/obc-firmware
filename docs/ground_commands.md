@@ -128,8 +128,8 @@ Starts update process and populates metadata. Responds with an ACK when ready to
 
 | Field | Size |
 | ----- | ---- |
-| CRC32 | 4    |
 | SIZE  | 4    |
+| CRC32 | 4    |
 
 CRC32 is the CRC of the update image.
 

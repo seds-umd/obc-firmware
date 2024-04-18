@@ -62,8 +62,8 @@ typedef union {
     struct telem_struct telem;
 
     struct {
-        uint32_t crc32;
         uint32_t size;
+        uint32_t crc32;
     } update_init;
 
     struct {

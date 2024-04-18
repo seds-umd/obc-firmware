@@ -16,7 +16,6 @@ uint32_t calc_crc32(uint32_t *buf, uint32_t size) {
     // CRC setup
     channel_config_set_sniff_enable(&c, true);
     dma_sniffer_set_data_accumulator(0xFFFFFFFF);  // CRC initial value
-    dma_sniffer_set_output_reverse_enabled(true);
     dma_sniffer_enable(chan, DMA_SNIFF_CTRL_CALC_VALUE_CRC32R, true);
 
     // Run DMA and wait for it to finish
