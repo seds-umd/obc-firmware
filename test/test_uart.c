@@ -54,7 +54,7 @@ void test_tx() {
     }
 
     // Send data
-    for (int j=0; j<count; j++) {
+    for (int j = 0; j < count; j++) {
         uart_putc_raw(uart0, buf[j]);
     }
 
@@ -63,7 +63,7 @@ void test_tx() {
     // Receive data
     uint8_t rx_buf[BUF_SIZE];
 
-    for (int j=0; j<count; j++) {
+    for (int j = 0; j < count; j++) {
         rx_buf[j] = uart_sim_tx_get(uart0);
     }
 

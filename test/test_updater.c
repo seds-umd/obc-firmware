@@ -26,10 +26,10 @@ void test_update_status() {
 
     TEST_ASSERT_EQUAL(77, count_remaining_chunks());
 
-    for (int i=0; i<12; i++) set_update_status(i);
-    TEST_ASSERT_EQUAL(77-12, count_remaining_chunks());
+    for (int i = 0; i < 12; i++) set_update_status(i);
+    TEST_ASSERT_EQUAL(77 - 12, count_remaining_chunks());
 
-    for (int i=12; i<77; i++) set_update_status(i);
+    for (int i = 12; i < 77; i++) set_update_status(i);
     TEST_ASSERT_EQUAL(0, count_remaining_chunks());
 }
 
