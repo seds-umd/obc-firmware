@@ -7,6 +7,10 @@
 void test_flash() {
     flash_range_erase(0, PICO_FLASH_SIZE_BYTES);
 
+    for (int i = 0; i < PICO_FLASH_SIZE_BYTES; i++) {
+        TEST_ASSERT_EQUAL_UINT8(0xFF, sim_flash_buf[i]);
+    }
+
     uint8_t buf_zeros[256];
     memset(buf_zeros, 0, 256);
 

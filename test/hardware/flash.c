@@ -25,3 +25,15 @@ void flash_range_program(uint32_t flash_offs, const uint8_t *data,
         sim_flash_buf[flash_offs + i] = data[i] & sim_flash_buf[flash_offs + i];
     }
 }
+
+uint8_t sim_flash_read8(uint32_t addr) {
+    return *(sim_flash_buf + addr);
+}
+
+uint16_t sim_flash_read16(uint32_t addr) {
+    return *((uint16_t *) (sim_flash_buf + addr));
+}
+
+uint32_t sim_flash_read32(uint32_t addr) {
+    return *((uint32_t *) (sim_flash_buf + addr));
+}

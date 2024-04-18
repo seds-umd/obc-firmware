@@ -49,7 +49,7 @@ void set_update_status(uint16_t addr) {
 
     // TODO: make this slightly more recoverable
     if (verify != 0) {
-        state = UPDATER_UNRECOVERABLE;
+        state = UPDATER_ERR_SET_STATUS;
     }
 }
 
@@ -118,13 +118,11 @@ void updater_start_init(packet_t *pkt) {
 
     if (current_update_size > BL_UPDATE_SIZE) {
         current_update_size = BL_UPDATE_SIZE;
-        state = UPDATER_UNRECOVERABLE;
+        state = UPDATER_ERR_SIZE_OOB;
     }
 }
 
 int updater_try_init() {
-    init_state++;
-
     switch (init_state) {
         case 0:  // Erase staging slot
             // TODO: break this up into multiple calls
@@ -139,16 +137,19 @@ int updater_try_init() {
             uint32_t buf[64];
             memset(buf, 0xFF, 256);
 
-            buf[0] = current_update_crc;
-            buf[1] = current_update_size;
+            buf[0] = current_update_size;
+            buf[1] = current_update_crc;
 
             flash_range_program(BL_UPDATE_HEADER_START, (uint8_t *)buf, 256);
             break;
 
         default:
+            state = UPDATER_WAITING;
             return 1;
             break;
     }
+
+    init_state++;
 
     return 0;
 }
@@ -160,8 +161,9 @@ void updater_write_chunk(packet_t *pkt) {
     uint16_t addr = pkt->lst_pkt->pld.gnd_cmd.msg.update_chunk.addr;
     uint8_t addr_half_page = addr & 0x1;  // Get position within page
 
-    // Actual flash hardware address
+    // Physical flash address of start of page
     uint32_t addr_flash = BL_UPDATE_START + (addr << 7);
+    addr_flash = addr_flash - addr_flash % 256;
 
     // Fill half of page with received chunk
     memcpy(buf + addr_half_page * 128, half_page, 128);
@@ -174,7 +176,7 @@ void updater_write_chunk(packet_t *pkt) {
     // Read back data from flash and compare to packet
     int match = 0;
     uint32_t *expected = (uint32_t *)(half_page);
-    volatile uint32_t *actual = (uint32_t *)(flash_read + addr_flash);
+    volatile uint32_t *actual = (uint32_t *)(flash_read + addr_flash + addr_half_page*128);
 
     for (uint8_t i = 0; i < 128 / sizeof(uint32_t); i++) {
         // If any bit is different, match won't be 0
@@ -186,20 +188,13 @@ void updater_write_chunk(packet_t *pkt) {
         set_update_status(addr);
     } else {
         // TODO: at least attempt to recover
-        state = UPDATER_UNRECOVERABLE;
+        state = UPDATER_ERR_CHUNK_FAILED;
     }
 }
 
-void updater_send_status(packet_t *pkt) {
-    // Ignore incoming packet, contents doesn't matter
-
+void updater_populate_status(openlst_packet_t *reply) {
     // Save last address between calls
     static uint16_t last_addr_checked = 0;
-
-    // Prepare reply packet
-    openlst_packet_t *reply = openlst_get_tx_buffer();
-    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
-    reply->pld.gnd_cmd.opcode = 0x33;
 
     uint32_t update_size = get_update_size();
     uint16_t remaining = count_remaining_chunks();
@@ -240,7 +235,12 @@ void updater_send_status(packet_t *pkt) {
 
             addr_list[i] = addr;
             addr_count++;
+            addr++;
         }
+    }
+
+    if (crc_match & (remaining == 0)) {
+        state = UPDATER_READY;
     }
 
     // Populate reply packet
@@ -253,6 +253,14 @@ void updater_send_status(packet_t *pkt) {
     reply->len = OPENLST_HEADER_SIZE + 1 +
                  sizeof(reply->pld.gnd_cmd.msg.update_status) -
                  2 * (96 - addr_count);
+}
+
+void updater_send_status(packet_t *pkt) {
+    openlst_packet_t *reply = openlst_get_tx_buffer();
+    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+    reply->pld.gnd_cmd.opcode = 0x33;
+
+    updater_populate_status(reply);
 
     openlst_tx(reply);
 }

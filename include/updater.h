@@ -15,7 +15,9 @@ enum UpdaterState {
     UPDATER_INIT = 1,     // Initialization process
     UPDATER_WAITING = 2,  // Waiting for data to come in
     UPDATER_READY = 3,    // Update is ready to be applied
-    UPDATER_UNRECOVERABLE = 255,
+    UPDATER_ERR_SET_STATUS = 0x80,
+    UPDATER_ERR_SIZE_OOB = 0x81,
+    UPDATER_ERR_CHUNK_FAILED = 0x82,
 };
 
 /**
@@ -46,6 +48,15 @@ int updater_try_init();
  * @param pkt Incoming command packet
  */
 void updater_write_chunk(packet_t *pkt);
+
+/**
+ * @brief Populate status packet with data.
+ * 
+ * This is a separate function from updater_send_status to make testing easier.
+ * 
+ * @param reply Reply packet to fill with status
+ */
+void updater_populate_status(openlst_packet_t *reply);
 
 /**
  * @brief Send update status packet.
