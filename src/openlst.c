@@ -106,7 +106,7 @@ void openlst_deinit() {
     queue_free(&tx_buf_queue);
 }
 
-void openlst_uart_isr() {
+void __not_in_flash_func(openlst_uart_isr) () {
     while (uart_is_readable(OPENLST_UART_ID)) {
         // Access register directly to speed things up
         rx_buf[rx_buf_wr++] = UART_DR(OPENLST_UART_ID);
@@ -260,7 +260,7 @@ int openlst_tx(openlst_packet_t *pkt) {
     return 0;
 }
 
-void openlst_dma_isr() {
+void __not_in_flash_func(openlst_dma_isr) () {
     // Clear request
     dma_hw->ints0 = 1 << tx_dma_chan;
 
