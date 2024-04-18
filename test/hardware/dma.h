@@ -17,6 +17,7 @@
 #define DREQ_UART0_TX 0
 #define DREQ_UART1_TX 0
 #define DMA_IRQ_0 0
+#define DMA_SNIFF_CTRL_CALC_VALUE_CRC32R 0
 
 typedef struct {
     uint32_t ctrl;
@@ -38,6 +39,10 @@ static inline int dma_claim_unused_channel(bool required) {
     UNUSED(required);
 
     return 0;
+}
+
+static inline void dma_channel_unclaim(uint channel) {
+    UNUSED(channel);
 }
 
 static inline dma_channel_config dma_channel_get_default_config(int channel) {
@@ -66,6 +71,11 @@ static inline void channel_config_set_read_increment(dma_channel_config *c, bool
 static inline void channel_config_set_dreq(dma_channel_config *c, uint dreq) {
     UNUSED(c);
     UNUSED(dreq);
+}
+
+static inline void channel_config_set_sniff_enable(dma_channel_config *c, bool sniff_enable) {
+    UNUSED(c);
+    UNUSED(sniff_enable);
 }
 
 static inline void dma_channel_configure(uint channel,
@@ -103,4 +113,22 @@ static inline bool dma_channel_is_busy(uint channel) {
     UNUSED(channel);
 
     return false;
+}
+
+inline static void dma_channel_wait_for_finish_blocking(uint channel) {
+    UNUSED(channel);
+}
+
+inline static void dma_sniffer_set_data_accumulator(uint32_t seed_value) {
+    UNUSED(seed_value);
+}
+
+inline static void dma_sniffer_enable(uint channel, uint mode, bool force_channel_enable) {
+    UNUSED(channel);
+    UNUSED(mode);
+    UNUSED(force_channel_enable);
+}
+
+inline static uint32_t dma_sniffer_get_data_accumulator() {
+    return 0;
 }
