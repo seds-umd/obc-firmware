@@ -90,4 +90,5 @@ void uart_putc_raw(uart_inst_t *uart, char c) {
     TEST_ASSERT_LESS_THAN_UINT_MESSAGE(uart->buf_size, uart_sim_tx_buf_size(uart), "TX buffer overflow");
 
     uart->tx_buf[uart->tx_buf_wr++] = c;
+    uart->tx_buf_wr %= uart->buf_size;
 }
