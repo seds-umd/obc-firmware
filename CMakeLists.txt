@@ -29,6 +29,7 @@ add_executable(obc_fw
     src/openlst_driver.c
     src/scheduler.c
     src/telemetry.c
+    src/updater.c
 
     # External source files
     external/littlefs/lfs.c
