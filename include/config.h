@@ -17,8 +17,12 @@
 #define OPENLST_UART_CTS 14
 #define OPENLST_UART_RTS 15
 
-// TODO: enable flow control eventually
+// NO_FLOW_CONTROL can be specified when running cmake
+#ifdef NO_FLOW_CONTROL
 #define OPENLST_FLOW false
+#else
+#define OPENLST_FLOW true
+#endif
 
 // Buffer size must be a power of 2
 #define OPENLST_RX_BUF_LEN 1024
