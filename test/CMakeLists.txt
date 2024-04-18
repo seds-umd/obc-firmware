@@ -23,17 +23,21 @@ add_executable(tests
     ../src/command_handler.c
     ../src/openlst.c
     ../src/scheduler.c
+    ../src/updater.c
 
     # Test infrastructure
+    hardware/flash.c
     hardware/uart.c
     main.c
     globals.c
 
     # Test files
     test_commands.c
+    test_flash.c
     test_openlst.c
     test_scheduler.c
     test_uart.c
+    test_updater.c
     test_queue.c
 
     # Don't add src/main.c because it will conflict with test/main.c

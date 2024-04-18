@@ -17,7 +17,8 @@ static uint32_t current_update_size = 0;
 // Pointer to no-cache no-alloc section of flash. We don't want to waste cache
 // on this because whenever we want to read it, we'll want the latest version.
 // Made const so it errors if we try to write (which will fail at runtime).
-static volatile const uint8_t *const flash_read = (uint8_t *)0x13000000;
+static volatile const uint8_t *const flash_read =
+    (uint8_t *)FLASH_ADDR_NOCACHE_NOALLOC;
 
 // Set update status bit to 0 for a given address. Address is for half page
 void set_update_status(uint16_t addr) {
@@ -40,9 +41,10 @@ void set_update_status(uint16_t addr) {
 }
 
 uint16_t count_remaining_chunks() {
-    uint32_t update_size = *(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE);
+    uint32_t update_size =
+        *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
     uint16_t update_size_bits = update_size >> 7;    // Number of status bits
-    uint16_t update_size_bytes = update_size >> 11;  // Number of status bytes
+    uint16_t update_size_bytes = update_size >> 10;  // Number of status bytes
 
     const volatile uint8_t *status_ptr = flash_read + BL_UPDATE_HEADER_STATUS;
 
@@ -54,10 +56,12 @@ uint16_t count_remaining_chunks() {
         status_ptr++;
     }
 
-    // remainder: 3 bits (bytes) + 2 bits (word)
-    uint8_t rem_count = update_size_bits & 0x1F;
-    uint32_t rem = *status_ptr & ((1 << rem_count) - 1);
-    remaining += __builtin_popcount(rem);
+    // remainder: 3 bits for partially used last byte
+    uint8_t rem_count = update_size_bits & 0x7;
+    if (rem_count != 0) {
+        uint32_t rem = *status_ptr & ((1 << rem_count) - 1);
+        remaining += __builtin_popcount(rem);
+    }
 
     return remaining;
 }
