@@ -76,7 +76,7 @@ typedef union {
         uint8_t crc_matched;
         uint32_t crc_expected;
         uint16_t chunks_remaining;
-        uint16_t chunk_addr[];  // flexible size array
+        uint16_t chunk_addr[96];
     } update_status;
 } command_t;
 

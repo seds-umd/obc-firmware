@@ -21,6 +21,7 @@ include_directories(
 add_executable(tests
     # Add new sources files here
     ../src/command_handler.c
+    ../src/crc32.c
     ../src/openlst.c
     ../src/scheduler.c
     ../src/updater.c

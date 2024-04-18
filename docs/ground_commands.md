@@ -50,6 +50,8 @@ The sizes listed for commands are the total sizes, including the opcode but not 
 
 ### 0x00 - ACK
 
+Size: 2
+
 | Field | Size |
 | ----- | ---- |
 | NACK  | 1    |
@@ -58,6 +60,8 @@ If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is 
 
 ### 0x01 - PING
 
+Size: 1 + N
+
 | Field | Size |
 | ----- | ---- |
 | DATA  | N    |
@@ -65,6 +69,8 @@ If NACK is set to 0, response is ACK. If 1, response is NACK. Generally, ACK is 
 If a ping is received, the receiver will respond with an ACK message that has the same sequence ID. The rest of contents of the message will be repeated with no changes.
 
 ### 0x02 - MSG
+
+Size: 2 + N
 
 | Field   | Size |
 | ------- | ---- |
@@ -76,6 +82,8 @@ Contains an ASCII message intended to be read by humans, such as errors, warning
 TODO: implement different log levels
 
 ### 0x03 - REBOOT
+
+Size: 1
 
 Reboots OBC immediately.
 
@@ -114,6 +122,8 @@ Field name prefix indicated type: V_ means voltage, I_ means current, T_ means t
 
 ### 0x30 - UPDATE_INIT
 
+Size: 9
+
 Starts update process and populates metadata. Responds with an ACK when ready to start updating.
 
 | Field | Size |
@@ -127,6 +137,8 @@ SIZE is the size in bytes of the image. Size must be a multiple of 128.
 
 ### 0x31 - UPDATE_CHUNK
 
+Size: 131
+
 | Field | Size |
 | ----- | ---- |
 | ADDR  | 2    |
@@ -138,9 +150,13 @@ DATA is the chunk of data containing a small section of the update image.
 
 ### 0x32 - UPDATE_STATUS_REQ
 
+Size: 1
+
 Requests the status of an ongoing update.
 
 ### 0x33 - UPDATE_STATUS
+
+Size: 9 + 2N
 
 | Field            | Size |
 | ---------------- | ---- |
@@ -156,7 +172,7 @@ UPDATE_STATUS can have the following values:
 * 2: updater waiting for chunks to be sent
 * 3: update ready to be applied (all chunks written and CRC matches)
 * 4: CRC mismatch (but all chunks written)
-* 255: unknown/other error
+* 255: unrecoverable error, must restart update
 
 CRC_EXPECTED is the value of the CRC stored in the program header. This can be used to validate that both sides are looking at the same image.
 
@@ -164,7 +180,7 @@ CRC_MATCH is 1 if the calculated CRC of the update matches the expected CRC, and
 
 CHUNKS_REMAINING is the number of chunks that have not yet been written to. If no chunks have been written yet, this will be SIZE/128. It will never be greater than that value. When the entire update has been received, this will be 0.
 
-CHUNK_ADDR[N] is a list of addresses of chunks that still need to be written to. The lower 7 bits of the address are not included because chunks will always be aligned to 128 bytes. Addresses start at 0 for the start of the update slot.
+CHUNK_ADDR[N] is a list of addresses of chunks that still need to be written to. The lower 7 bits of the address are not included because chunks will always be aligned to 128 bytes. Addresses start at 0 for the start of the update slot. Up to 96 addresses can fit in a single packet.
 
 ### 0x40 - OPENLST_PWR
 

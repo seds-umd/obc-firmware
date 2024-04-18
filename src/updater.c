@@ -2,6 +2,7 @@
 
 #include "bl_common.h"
 #include "command_formats.h"
+#include "crc32.h"
 #include "openlst.h"
 
 #include "hardware/flash.h"
@@ -20,6 +21,12 @@ static uint32_t current_update_size = 0;
 static volatile const uint8_t *const flash_read =
     (uint8_t *)FLASH_ADDR_NOCACHE_NOALLOC;
 
+static inline int get_update_status(uint16_t addr) {
+    uint8_t status_byte = *(flash_read + BL_UPDATE_HEADER_STATUS + (addr >> 3));
+
+    return (status_byte >> (addr & 0x7)) & 0x1;
+}
+
 // Set update status bit to 0 for a given address. Address is for half page
 void set_update_status(uint16_t addr) {
     uint8_t page_addr = (addr >> 11) & 0x3;  // 4 pages, 2 bit address
@@ -37,12 +44,21 @@ void set_update_status(uint16_t addr) {
     // TODO: use custom flash commands so we only have to write a single byte
     flash_range_program(phys_addr, buf, 256);
 
-    // TODO: verify bit is written
+    // Verify bit is written correctly
+    int verify = get_update_status(addr);
+
+    // TODO: make this slightly more recoverable
+    if (verify != 0) {
+        state = UPDATER_UNRECOVERABLE;
+    }
+}
+
+static inline uint32_t get_update_size() {
+    return *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
 }
 
 uint16_t count_remaining_chunks() {
-    uint32_t update_size =
-        *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
+    uint32_t update_size = get_update_size();
     uint16_t update_size_bits = update_size >> 7;    // Number of status bits
     uint16_t update_size_bytes = update_size >> 10;  // Number of status bytes
 
@@ -157,7 +173,8 @@ void updater_write_chunk(packet_t *pkt) {
         // Write successful, update status
         set_update_status(addr);
     } else {
-        // TODO: figure out what to do here
+        // TODO: at least attempt to recover
+        state = UPDATER_UNRECOVERABLE;
     }
 }
 
@@ -167,25 +184,63 @@ void updater_send_status(packet_t *pkt) {
     // Save last address between calls
     static uint16_t last_addr_checked = 0;
 
-    uint16_t remaining = count_remaining_chunks();
-    uint32_t crc_expected = *(flash_read + BL_UPDATE_HEADER_CRC);
-
-    if (remaining == 0) {
-        // Only check CRC if all data has already been written
-    } else {
-        // Only record addresses if there's unwritten chunks
-    }
-
-    // Generate reply packet
+    // Prepare reply packet
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->pld.gnd_cmd.opcode = 0x33;
 
+    uint32_t update_size = get_update_size();
+    uint16_t remaining = count_remaining_chunks();
+    uint32_t crc_expected = *(flash_read + BL_UPDATE_HEADER_CRC);
+    uint8_t crc_match = 0;
+    uint8_t addr_count = 0;
+
+    if (remaining == 0) {
+        // Only check CRC if all data has already been written
+
+        uint32_t crc_actual = calc_crc32(
+            (uint32_t *)(flash_read + BL_UPDATE_START), update_size / 4);
+
+        crc_match = (crc_expected == crc_actual) ? 1 : 0;
+    } else {
+        // Only record addresses if there's unwritten chunks
+        // Include up to 96 chunk addresses
+        uint16_t addr = last_addr_checked;
+        uint16_t *addr_list = reply->pld.gnd_cmd.msg.update_status.chunk_addr;
+
+        for (int i = 0; i < 96; i++) {
+            int done = 0;
+
+            while (get_update_status(addr) == 0) {
+                addr++;
+
+                if (addr > update_size) {
+                    addr &= update_size;
+                }
+
+                if (addr == last_addr_checked) {
+                    done = 1;
+                    break;
+                }
+            }
+
+            if (done) break;
+
+            addr_list[i] = addr;
+            addr_count++;
+        }
+    }
+
+    // Populate reply packet
     reply->pld.gnd_cmd.msg.update_status.update_status = state;
-    // reply->pld.gnd_cmd.msg.update_status.crc_matched =
+    reply->pld.gnd_cmd.msg.update_status.crc_matched = crc_match;
     reply->pld.gnd_cmd.msg.update_status.crc_expected = crc_expected;
     reply->pld.gnd_cmd.msg.update_status.chunks_remaining = remaining;
-    // reply->pld.gnd_cmd.msg.update_status.chunk_addr =
+
+    // Size changes depending on the number of chunk addresses included
+    reply->len = OPENLST_HEADER_SIZE + 1 +
+                 sizeof(reply->pld.gnd_cmd.msg.update_status) -
+                 2 * (96 - addr_count);
 
     openlst_tx(reply);
 }

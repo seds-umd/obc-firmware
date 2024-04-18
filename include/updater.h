@@ -15,6 +15,7 @@ enum UpdaterState {
     UPDATER_INIT = 1,     // Initialization process
     UPDATER_WAITING = 2,  // Waiting for data to come in
     UPDATER_READY = 3,    // Update is ready to be applied
+    UPDATER_UNRECOVERABLE = 255,
 };
 
 /**
@@ -48,7 +49,7 @@ void updater_write_chunk(packet_t *pkt);
 
 /**
  * @brief Send update status packet.
- * 
+ *
  * @param pkt Incoming command packet
  */
 void updater_send_status(packet_t *pkt);
