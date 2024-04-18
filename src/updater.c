@@ -54,7 +54,13 @@ void set_update_status(uint16_t addr) {
 }
 
 static inline uint32_t get_update_size() {
-    return *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
+    uint32_t size = *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
+
+    if (size == UINT32_MAX) {
+        return 0;
+    } else {
+        return size;
+    }
 }
 
 uint16_t count_remaining_chunks() {
@@ -108,6 +114,11 @@ void updater_start_init(packet_t *pkt) {
 
     current_update_crc = pkt->lst_pkt->pld.gnd_cmd.msg.update_init.crc32;
     current_update_size = pkt->lst_pkt->pld.gnd_cmd.msg.update_init.size;
+
+    if (current_update_size > BL_UPDATE_SIZE) {
+        current_update_size = BL_UPDATE_SIZE;
+        state = UPDATER_UNRECOVERABLE;
+    }
 }
 
 int updater_try_init() {
@@ -166,7 +177,7 @@ void updater_write_chunk(packet_t *pkt) {
 
     for (uint8_t i = 0; i < 128 / sizeof(uint32_t); i++) {
         // If any bit is different, match won't be 0
-        match |= *actual ^ *expected;
+        match |= actual[i] ^ expected[i];
     }
 
     if (match == 0) {

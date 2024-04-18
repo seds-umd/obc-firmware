@@ -15,15 +15,15 @@ Page size is 256 bytes, min erase size is 4 kB.
 
 When changing the flash layout, also update `bl_common.h`.
 
-| Start       | End         | Size     | Access | Description                |
-| ----------- | ----------- | -------- | ------ | -------------------------- |
-| 0x0000_0000 | 0x0000_00FF | 256 B    | R      | boot2, pico-sdk bootloader |
-| 0x0000_0100 | 0x0000_3FFF | 15.75 kB | RX     | Our bootloader             |
-| 0x0000_4000 | 0x0000_4FFF | 4 kB     | RW     | Program header             |
-| 0x0000_5000 | 0x0000_5FFF | 4 kB     | RW     | Update header              |
-| 0x0000_6000 | 0x000F_FFFF | 1000 kB  | RW     | Misc config data           |
-| 0x0010_0000 | 0x001F_FFFF | 1024 kB  | RWX    | Application slot           |
-| 0x0020_0000 | 0x002F_FFFF | 1024 kB  | RW     | Update staging slot        |
+| Start     | End       | Size     | Access | Description                |
+| --------- | --------- | -------- | ------ | -------------------------- |
+| 0x00_0000 | 0x00_00FF | 256 B    | R      | boot2, pico-sdk bootloader |
+| 0x00_0100 | 0x00_3FFF | 15.75 kB | RX     | Our bootloader             |
+| 0x00_4000 | 0x00_4FFF | 4 kB     | RW     | Program header             |
+| 0x00_5000 | 0x00_5FFF | 4 kB     | RW     | Update header              |
+| 0x00_6000 | 0x07_FFFF | 488 kB   | RW     | Misc config data           |
+| 0x08_0000 | 0x0F_FFFF | 512 kB   | RWX    | Application slot           |
+| 0x10_0000 | 0x17_FFFF | 512 kB   | RW     | Update staging slot        |
 
 In each section below, the addresses are relative to the start of the section.
 
@@ -40,16 +40,16 @@ Much of the space in the program header and update header is reserved and unused
 
 ### Update Header
 
-| Start  | End    | Size | Description   |
-| ------ | ------ | ---- | ------------- |
-| 0x0000 | 0x0003 | 4 B  | Size          |
-| 0x0004 | 0x0007 | 4 B  | CRC32         |
-| 0x0008 | 0x03FF | ...  | Reserved      |
-| 0x0400 | 0x07FF | 1 kB | Update status |
-| 0x0800 | 0x0FFE | ...  | Reserved      |
-| 0x0FFF | 0x0FFF | 1 B  | Valid         |
+| Start  | End    | Size  | Description   |
+| ------ | ------ | ----- | ------------- |
+| 0x0000 | 0x0003 | 4 B   | Size          |
+| 0x0004 | 0x0007 | 4 B   | CRC32         |
+| 0x0008 | 0x03FF | ...   | Reserved      |
+| 0x0400 | 0x05FF | 512 B | Update status |
+| 0x0800 | 0x0FFE | ...   | Reserved      |
+| 0x0FFF | 0x0FFF | 1 B   | Valid         |
 
-In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 1024 bytes * 8 bits/byte * 128 bytes/bit = 1 MB.
+In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 512 bytes * 8 bits/byte * 128 bytes/bit = 512 kB.
 
 ## Update Process
 
