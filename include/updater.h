@@ -33,7 +33,7 @@ void updater_process();
  *
  * @param pkt Packet that commanded initialization.
  */
-void updater_start_init(packet_t *pkt);
+int updater_start_init(packet_t *pkt);
 
 /**
  * @brief Attempt to complete updater initialization.
@@ -50,7 +50,7 @@ int updater_try_init();
  *
  * @param pkt Incoming command packet
  */
-void updater_write_chunk(packet_t *pkt);
+int updater_write_chunk(packet_t *pkt);
 
 /**
  * @brief Populate status packet with data.
@@ -66,4 +66,11 @@ void updater_populate_status(openlst_packet_t *reply);
  *
  * @param pkt Incoming command packet
  */
-void updater_send_status(packet_t *pkt);
+int updater_send_status(packet_t *pkt);
+
+/**
+ * @brief Apply update
+ * 
+ * @param pkt Incoming command packet
+ */
+int updater_apply_update(packet_t *pkt);

@@ -144,7 +144,7 @@ void updater_process() {
     }
 }
 
-void updater_start_init(packet_t *pkt) {
+int updater_start_init(packet_t *pkt) {
     // Get update header info and start initialization
     state = UPDATER_INIT;
     init_state = 0;
@@ -156,6 +156,8 @@ void updater_start_init(packet_t *pkt) {
         current_update_size = BL_UPDATE_SIZE;
         state = UPDATER_ERR_SIZE_OOB;
     }
+
+    return 0;
 }
 
 int updater_try_init() {
@@ -190,7 +192,7 @@ int updater_try_init() {
     return 0;
 }
 
-void updater_write_chunk(packet_t *pkt) {
+int updater_write_chunk(packet_t *pkt) {
     uint8_t buf[256];
     uint8_t *half_page = pkt->lst_pkt->pld.gnd_cmd.msg.update_chunk.data;
 
@@ -204,7 +206,7 @@ void updater_write_chunk(packet_t *pkt) {
     if ((addr_flash < BL_UPDATE_START) |
         (addr_flash >= BL_UPDATE_START + BL_UPDATE_SIZE)) {
         state = UPDATER_ERR_CHUNK_OOB;
-        return;
+        return 0;
     }
 
     // Fill half of page with received chunk
@@ -233,6 +235,8 @@ void updater_write_chunk(packet_t *pkt) {
         // TODO: at least attempt to recover
         state = UPDATER_ERR_CHUNK_FAILED;
     }
+
+    return 0;
 }
 
 void updater_populate_status(openlst_packet_t *reply) {
@@ -303,7 +307,7 @@ void updater_populate_status(openlst_packet_t *reply) {
                  2 * (96 - addr_count);  // Number of addresses actually used
 }
 
-void updater_send_status(packet_t *pkt) {
+int updater_send_status(packet_t *pkt) {
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->pld.gnd_cmd.opcode = 0x33;
@@ -311,6 +315,8 @@ void updater_send_status(packet_t *pkt) {
     updater_populate_status(reply);
 
     openlst_tx(reply);
+
+    return 0;
 }
 
 void __not_in_flash_func(finalize_update)() {
@@ -364,9 +370,13 @@ void __not_in_flash_func(finalize_update)() {
     watchdog_reboot(0, 0, 0);
 }
 
-void updater_apply_update() {
+int updater_apply_update(packet_t *pkt) {
+    UNUSED(pkt);
+
     // Send ACK
     // Turn off interrupts
 
     finalize_update();
+
+    return 0;
 }

@@ -7,6 +7,7 @@
 #include "openlst_driver.h"
 #include "scheduler.h"
 #include "telemetry.h"
+#include "updater.h"
 
 #include "hardware/gpio.h"
 #include "pico/rand.h"
@@ -43,6 +44,9 @@ int main() {
     // Set to 1s for now, if this needs to do anything more complicated we can
     // decrease this
     scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
+
+    // Updater
+    scheduler_add_task(updater_process, 50 * 1000);
 
     command_setup();
 
