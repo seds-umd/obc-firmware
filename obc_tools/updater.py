@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TypedDict
+
 from obc import Obc
 from obc_commands import ObcCmds
-
+from openlst_tools.handler import Packet
 from openlst_tools.utils import unpack_cint, pack_cint
 
 # Modified from: https://gist.github.com/Lauszus/6c787a3bc26fea6e842dfb8296ebd630
@@ -29,11 +31,38 @@ def crc_poly(data, n=32, poly=0x04C11DB7, crc=0xFFFFFFFF):
     # Return the CRC value
     return crc
 
+class UpdateStatus(TypedDict):
+    status: int
+    crc_match: bool
+    crc_expected: int
+    chunks_remaining: int
+    chunk_addr: list
+
+    def decode(msg: bytes):
+        msg = bytearray(msg)
+
+        status = UpdateStatus()
+
+        def pop(n):
+            return bytes([msg.pop(0) for _ in range(n)])
+        
+        status["status"] = unpack_cint(pop(1), 1, True) # TODO: error string
+        status["crc_match"] = unpack_cint(pop(1), 1, False)
+        status["crc_expected"] = unpack_cint(pop(4), 4, False)
+        status["chunks_remaining"] = unpack_cint(pop(2), 2, False)
+
+        addrs = []
+        while len(msg) >= 2: addrs.append(unpack_cint(pop(2), 2, False))
+        status["chunk_addr"] = addrs
+
+        return status
+
 class Updater:
     def __init__(self, obc: Obc) -> None:
         self.obc = obc
 
     def do_update(self, image: bytes):
+        # Pad with zeros to fit into chunks
         if len(image) % 128 != 0:
             image = bytearray(image)
             image.extend([0] * len(image) % 128)
@@ -60,4 +89,6 @@ class Updater:
         self.obc.obc_cmd(ObcCmds.UPDATE_CHUNK, msg, False)
     
     def _get_status(self):
-        pass
+        reply: Packet = self.obc.obc_cmd(ObcCmds.UPDATE_STATUS_REQ, resp=True)
+
+        return UpdateStatus.decode(reply["data"][1:])
