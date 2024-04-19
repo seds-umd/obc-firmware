@@ -18,7 +18,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/external/littlefs
 )
 
-add_executable(obc_fw
+add_executable(application
     # Internal source files
     src/commands.c
     src/command_handler.c
@@ -36,9 +36,9 @@ add_executable(obc_fw
     external/littlefs/lfs.c
 )
 
-pico_enable_stdio_usb(obc_fw 1)
+pico_enable_stdio_usb(application 1)
 
-target_link_libraries(obc_fw
+target_link_libraries(application
     pico_multicore
     pico_stdlib
     pico_rand
@@ -46,19 +46,21 @@ target_link_libraries(obc_fw
     hardware_spi
 )
 
+pico_set_linker_script(application ${CMAKE_SOURCE_DIR}/include/application.ld)
+
 add_compile_definitions(
     LFS_NO_MALLOC # Disable dynamic memory allocation in LFS
 )
 
 # Turn on basically all useful warnings
 # (if this is a problem we can turn some off later)
-target_compile_options(obc_fw PUBLIC
+target_compile_options(application PUBLIC
     -Wall
     -Wextra
     -fstack-usage
 )
 
-pico_add_extra_outputs(obc_fw)
+pico_add_extra_outputs(application)
 
 install(CODE "execute_process(
     COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program ${CMAKE_PROJECT_NAME}.elf verify reset exit\"
