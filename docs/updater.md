@@ -38,6 +38,12 @@ Much of the space in the program header and update header is reserved and unused
 | 0x0008 | 0x0FFE | ...  | Reserved    |
 | 0x0FFF | 0x0FFF | 1 B  | Valid       |
 
+Valid byte:
+* 0b1111_1111 - default erase state, assume everything is invalid
+* 0b1111_1110 - application slot has been erased but not written to yet
+* 0b1111_1100 - application header is written, application may be partially written
+* 0b0000_0000 - application slot is valid
+
 ### Update Header
 
 | Start  | End    | Size  | Description   |
@@ -46,7 +52,7 @@ Much of the space in the program header and update header is reserved and unused
 | 0x0004 | 0x0007 | 4 B   | CRC32         |
 | 0x0008 | 0x03FF | ...   | Reserved      |
 | 0x0400 | 0x05FF | 512 B | Update status |
-| 0x0800 | 0x0FFE | ...   | Reserved      |
+| 0x0600 | 0x0FFE | ...   | Reserved      |
 | 0x0FFF | 0x0FFF | 1 B   | Valid         |
 
 In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 512 bytes * 8 bits/byte * 128 bytes/bit = 512 kB.

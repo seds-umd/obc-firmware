@@ -72,7 +72,7 @@ typedef union {
     } update_chunk;
 
     struct {
-        uint8_t update_status;
+        int8_t update_status;
         uint8_t crc_matched;
         uint32_t crc_expected;
         uint16_t chunks_remaining;

@@ -11,13 +11,16 @@
 #endif
 
 enum UpdaterState {
-    UPDATER_IDLE = 0,     // No updates in progress
-    UPDATER_INIT = 1,     // Initialization process
-    UPDATER_WAITING = 2,  // Waiting for data to come in
-    UPDATER_READY = 3,    // Update is ready to be applied
-    UPDATER_ERR_SET_STATUS = 0x80,
-    UPDATER_ERR_SIZE_OOB = 0x81,
-    UPDATER_ERR_CHUNK_FAILED = 0x82,
+    UPDATER_IDLE = 0,                  // No updates in progress
+    UPDATER_INIT = 1,                  // Initialization process
+    UPDATER_WAITING = 2,               // Waiting for data to come in
+    UPDATER_READY = 3,                 // Update is ready to be applied
+    UPDATER_ERR_SET_STATUS = -1,       // Chunk status not set correctly
+    UPDATER_ERR_SIZE_OOB = -2,         // Update size out of bounds
+    UPDATER_ERR_CHUNK_FAILED = -3,     // Chunk wasn't written successfully
+    UPDATER_ERR_STATUS_ADDR_OOB = -4,  // Status write address out of bounds
+    UPDATER_ERR_CHUNK_OOB = -5,        // Chunk address out of bounds
+    UPDATER_ERR_CRC_MISMATCH = -6,     // CRC doesn't match
 };
 
 /**
@@ -51,9 +54,9 @@ void updater_write_chunk(packet_t *pkt);
 
 /**
  * @brief Populate status packet with data.
- * 
+ *
  * This is a separate function from updater_send_status to make testing easier.
- * 
+ *
  * @param reply Reply packet to fill with status
  */
 void updater_populate_status(openlst_packet_t *reply);

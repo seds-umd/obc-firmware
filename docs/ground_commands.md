@@ -166,13 +166,16 @@ Size: 9 + 2N
 | CHUNKS_REMAINING | 2    |
 | CHUNK_ADDR[N]    | 2N   |
 
-UPDATE_STATUS can have the following values:
+UPDATE_STATUS is a int8_t that can have the following values:
 * 0: updater idle, no update in progress
 * 1: updater initializing, do not send chunks yet
 * 2: updater waiting for chunks to be sent
 * 3: update ready to be applied (all chunks written and CRC matches)
-* 4: CRC mismatch (but all chunks written)
-* 255: unrecoverable error, must restart update
+* -1: error when setting chunk status
+* -2: update size out of bounds
+* -3: error when writing chunk
+* -4: status write address out of bounds
+* -5: chunk address out of bounds
 
 CRC_EXPECTED is the value of the CRC stored in the program header. This can be used to validate that both sides are looking at the same image.
 
@@ -181,6 +184,12 @@ CRC_MATCH is 1 if the calculated CRC of the update matches the expected CRC, and
 CHUNKS_REMAINING is the number of chunks that have not yet been written to. If no chunks have been written yet, this will be SIZE/128. It will never be greater than that value. When the entire update has been received, this will be 0.
 
 CHUNK_ADDR[N] is a list of addresses of chunks that still need to be written to. The lower 7 bits of the address are not included because chunks will always be aligned to 128 bytes. Addresses start at 0 for the start of the update slot. Up to 96 addresses can fit in a single packet.
+
+### 0x34 - UPDATE_APPLY
+
+Size: 1
+
+No message content. Commands an update to be applied.
 
 ### 0x40 - OPENLST_PWR
 

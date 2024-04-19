@@ -3,9 +3,11 @@
 #include "bl_common.h"
 #include "command_formats.h"
 #include "crc32.h"
+#include "macros.h"
 #include "openlst.h"
 
 #include "hardware/flash.h"
+#include "hardware/watchdog.h"
 
 #include <string.h>
 
@@ -41,6 +43,12 @@ void set_update_status(uint16_t addr) {
 
     uint32_t phys_addr = BL_UPDATE_HEADER_STATUS + page_addr * 256;
 
+    if ((phys_addr >= BL_UPDATE_HEADER_STATUS + BL_UPDATE_HEADER_SIZE) |
+        (phys_addr < BL_UPDATE_HEADER_STATUS)) {
+        state = UPDATER_ERR_STATUS_ADDR_OOB;
+        return;
+    }
+
     // TODO: use custom flash commands so we only have to write a single byte
     flash_range_program(phys_addr, buf, 256);
 
@@ -53,6 +61,30 @@ void set_update_status(uint16_t addr) {
     }
 }
 
+uint8_t get_application_valid() {
+    return *(flash_read + BL_PROGRAM_HEADER_VALID);
+}
+
+void set_application_valid(uint8_t state) {
+    if (state > 8) {
+        state = 8;
+    }
+
+    uint8_t buf[256];
+    memset(buf, 0xFF, 256);
+
+    // Set state bits low
+    uint8_t valid = ~((1 << state) - 1);
+    buf[255] &= valid;
+
+    flash_range_program((BL_PROGRAM_HEADER_VALID) & ~(0xFFu), buf, 256);
+
+    if (*(flash_read + BL_PROGRAM_HEADER_VALID) != valid) {
+        // Try again I guess? Not much else we can do here
+        flash_range_program((BL_PROGRAM_HEADER_VALID) & ~(0xFFu), buf, 256);
+    }
+}
+
 static inline uint32_t get_update_size() {
     uint32_t size = *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
 
@@ -61,6 +93,10 @@ static inline uint32_t get_update_size() {
     } else {
         return size;
     }
+}
+
+static inline uint32_t get_update_crc() {
+    return *((uint32_t *)(flash_read + BL_UPDATE_HEADER_CRC));
 }
 
 uint16_t count_remaining_chunks() {
@@ -165,6 +201,12 @@ void updater_write_chunk(packet_t *pkt) {
     uint32_t addr_flash = BL_UPDATE_START + (addr << 7);
     addr_flash = addr_flash - addr_flash % 256;
 
+    if ((addr_flash < BL_UPDATE_START) |
+        (addr_flash >= BL_UPDATE_START + BL_UPDATE_SIZE)) {
+        state = UPDATER_ERR_CHUNK_OOB;
+        return;
+    }
+
     // Fill half of page with received chunk
     memcpy(buf + addr_half_page * 128, half_page, 128);
 
@@ -176,7 +218,8 @@ void updater_write_chunk(packet_t *pkt) {
     // Read back data from flash and compare to packet
     int match = 0;
     uint32_t *expected = (uint32_t *)(half_page);
-    volatile uint32_t *actual = (uint32_t *)(flash_read + addr_flash + addr_half_page*128);
+    volatile uint32_t *actual =
+        (uint32_t *)(flash_read + addr_flash + addr_half_page * 128);
 
     for (uint8_t i = 0; i < 128 / sizeof(uint32_t); i++) {
         // If any bit is different, match won't be 0
@@ -209,6 +252,10 @@ void updater_populate_status(openlst_packet_t *reply) {
             (uint32_t *)(flash_read + BL_UPDATE_START), update_size / 4);
 
         crc_match = (crc_expected == crc_actual) ? 1 : 0;
+
+        if (crc_match == 0) {
+            state = UPDATER_ERR_CRC_MISMATCH;
+        }
     } else {
         // Only record addresses if there's unwritten chunks
         // Include up to 96 chunk addresses
@@ -218,6 +265,7 @@ void updater_populate_status(openlst_packet_t *reply) {
         for (int i = 0; i < 96; i++) {
             int done = 0;
 
+            // Look through each address to see if it's complete or not
             while (get_update_status(addr) == 0) {
                 addr++;
 
@@ -250,9 +298,9 @@ void updater_populate_status(openlst_packet_t *reply) {
     reply->pld.gnd_cmd.msg.update_status.chunks_remaining = remaining;
 
     // Size changes depending on the number of chunk addresses included
-    reply->len = OPENLST_HEADER_SIZE + 1 +
-                 sizeof(reply->pld.gnd_cmd.msg.update_status) -
-                 2 * (96 - addr_count);
+    reply->len = OPENLST_HEADER_SIZE + 1 +  // Header + opcode
+                 sizeof(reply->pld.gnd_cmd.msg.update_status) -  // Max size
+                 2 * (96 - addr_count);  // Number of addresses actually used
 }
 
 void updater_send_status(packet_t *pkt) {
@@ -263,4 +311,62 @@ void updater_send_status(packet_t *pkt) {
     updater_populate_status(reply);
 
     openlst_tx(reply);
+}
+
+void __not_in_flash_func(finalize_update)() {
+    for (int attempt = 0; attempt < 3; attempt++) {
+        // Erase header
+        flash_range_erase(BL_PROGRAM_HEADER_START, BL_PROGRAM_HEADER_SIZE);
+
+        // Erase application slot
+        flash_range_erase(BL_APP_START, BL_APP_SIZE);
+
+        // Set valid to indicate slot is erased
+        set_application_valid(0b11111110);
+
+        // Program header with size and CRC
+        uint32_t buf[64];
+        memset(buf, 0xFF, 256);
+
+        uint32_t size = get_update_size();
+        uint32_t crc = get_update_crc();
+
+        buf[0] = size;
+        buf[1] = crc;
+
+        flash_range_program(BL_PROGRAM_HEADER_START, (uint8_t *)buf, 256);
+
+        // Set valid to indicate header is written
+        set_application_valid(0b11111100);
+
+        // Copy update slot into application slot
+        for (uint32_t i = 0; i < size; i += 256) {
+            flash_range_program(BL_APP_START + i,
+                                (uint8_t *)flash_read + BL_UPDATE_START + i,
+                                256);
+        }
+
+        // Verify CRC
+        uint32_t crc_actual =
+            calc_crc32((uint32_t *)(flash_read + BL_APP_START), size / 4);
+
+        if (crc == crc_actual) {
+            // Set valid byte to indicate update is successful
+            set_application_valid(0);
+            break;
+        } else {
+            // If CRC doesn't match, retry
+            continue;
+        }
+    }
+
+    // If update is successful or attempted 3 time, reboot
+    watchdog_reboot(0, 0, 0);
+}
+
+void updater_apply_update() {
+    // Send ACK
+    // Turn off interrupts
+
+    finalize_update();
 }

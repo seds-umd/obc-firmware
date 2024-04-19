@@ -12,6 +12,7 @@
 // Function declarations to use internal functions of updater - a bit hacky
 void set_update_status(uint16_t addr);
 uint16_t count_remaining_chunks();
+void finalize_update();
 
 void test_update_status() {
     // Start with empty flash
@@ -98,11 +99,15 @@ void do_update(uint32_t update_size) {
         updater_populate_status(&reply);
 
         int remaining = reply.pld.gnd_cmd.msg.update_status.chunks_remaining;
+        int status = reply.pld.gnd_cmd.msg.update_status.update_status;
 
         // Done if no chunks are remaining
         if (remaining == 0) {
+            TEST_ASSERT_EQUAL_INT(UPDATER_READY, status);
             break;
         }
+
+        TEST_ASSERT_EQUAL_INT(UPDATER_WAITING, status);
 
         // Broke if remaining stayed the same (not technically but whatever)
         if (last_remaining == remaining) {
@@ -111,6 +116,8 @@ void do_update(uint32_t update_size) {
             stuck = 0;
         }
 
+        // No progress after 100 attempts is basically never going to happen
+        // by chance.
         if (stuck == 100) {
             TEST_FAIL_MESSAGE("Remaining chunks didn't decrease");
         }
@@ -129,7 +136,16 @@ void do_update(uint32_t update_size) {
     TEST_ASSERT_EQUAL_HEX8_ARRAY(update_data, sim_flash_buf + BL_UPDATE_START,
                                  update_size);
 
-    // Apply update: TODO
+    // Apply update
+    finalize_update();
+
+    // Check update data
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
+        update_data, sim_flash_buf + BL_APP_START, update_size,
+        "Update not applied correctly");
+
+    // Check valid byte
+    TEST_ASSERT_EQUAL_HEX8(0, *(sim_flash_buf + BL_PROGRAM_HEADER_VALID));
 
     // Clean up
     free(update_data);
@@ -141,9 +157,9 @@ void test_update_process() {
 
     do_update(128);
     do_update(256);
-    do_update(16*1024);
+    do_update(16 * 1024);
 
-    for (int i=0; i<100; i++) {
+    for (int i = 0; i < 100; i++) {
         // Random update size
         uint32_t update_size = rand() % (512 * 1024);
         update_size -= update_size % 128;  // Make it a multiple of 128 bytes
