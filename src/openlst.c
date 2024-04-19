@@ -214,6 +214,9 @@ openlst_packet_t *openlst_get_tx_buffer() {
         // No free buffers
         return NULL;
     } else {
+        // Mark buffer as in use until packet is sent
+        tx_buf_status |= (1 << i);
+
         // Use some reasonable defaults
         tx_buf[i].hdr.hwid = 0x0000;
         tx_buf[i].hdr.system = 0x01;
@@ -239,15 +242,12 @@ static void openlst_tx_dma(int pkt_idx) {
 int openlst_tx(openlst_packet_t *pkt) {
     // Assuming GCC puts tx_buf in sequential memory with no gaps, we can
     // calculate the index of the packet from it's pointer
-    int pkt_idx = (pkt - tx_buf) / sizeof(openlst_packet_t);
+    int pkt_idx = pkt - tx_buf;
 
     if ((pkt_idx < 0) | (pkt_idx >= OPENLST_TX_BUF_COUNT)) {
         // pkt does not point to a struct within the TX buffer
         return 1;
     }
-
-    // Mark buffer as in use until packet is sent
-    tx_buf_status &= (1 << pkt_idx);
 
     // Add packet to queue
     queue_add_blocking(&tx_buf_queue, &pkt_idx);
@@ -270,7 +270,7 @@ void __not_in_flash_func(openlst_dma_isr) () {
     queue_remove_blocking(&tx_buf_queue, &pkt);
 
     // Mark status as free
-    tx_buf_status |= ~(1 << pkt);
+    tx_buf_status &= ~(1 << pkt);
 
     // Start another transfer
     if (!queue_is_empty(&tx_buf_queue)) {

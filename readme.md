@@ -36,7 +36,7 @@ make
 ```
 
 Optional cmake defines (default state is none of these):
-* `-DNO_FLOW_CONTROL=` - don't use flow control on openlst interface
+* `-DFLOW_CONTROL=OFF` - don't use flow control on openlst interface
 
 To add a new unit test:
 

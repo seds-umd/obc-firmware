@@ -9,6 +9,12 @@ project(obc_fw C CXX ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(FLOW_CONTROL "OpenLST Flow Control" ON)
+
+if(!FLOW_CONTROL)
+    add_compile_definitions(-DNO_FLOW_CONTROL)
+endif(!FLOW_CONTROL)
+
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
@@ -64,8 +70,9 @@ target_compile_options(application PUBLIC
 
 pico_add_extra_outputs(application)
 
+# Program both application and bootloader
 install(CODE "execute_process(
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program ${CMAKE_PROJECT_NAME}.elf verify reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program bootloader.elf; program application.elf verify reset exit\"
 )")
 
 ###### Bootloader ######
@@ -88,3 +95,4 @@ target_compile_options(bootloader PUBLIC
 )
 
 pico_add_extra_outputs(bootloader)
+pico_set_binary_type(bootloader copy_to_ram)

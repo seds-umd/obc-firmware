@@ -8,7 +8,7 @@
 #include <string.h>
 
 void log_msg(const char *msg) {
-    openlst_packet_t *pkt;
+    openlst_packet_t *pkt = NULL;
 
     do {
         pkt = openlst_get_tx_buffer();
