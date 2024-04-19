@@ -18,6 +18,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/external/littlefs
 )
 
+###### Application ######
+
 add_executable(application
     # Internal source files
     src/commands.c
@@ -65,3 +67,24 @@ pico_add_extra_outputs(application)
 install(CODE "execute_process(
     COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program ${CMAKE_PROJECT_NAME}.elf verify reset exit\"
 )")
+
+###### Bootloader ######
+add_executable(bootloader
+    src/bootloader/main.c
+)
+
+target_link_libraries(bootloader
+    pico_stdlib
+    hardware_flash
+    cmsis_core
+)
+
+pico_set_linker_script(bootloader ${CMAKE_SOURCE_DIR}/include/bootloader.ld)
+
+target_compile_options(bootloader PUBLIC
+    -Wall
+    -Wextra
+    -fstack-usage
+)
+
+pico_add_extra_outputs(bootloader)

@@ -4,7 +4,7 @@
 
 #ifdef __arm__
 // RP2040 no-cache no-alloc flash alias
-#define FLASH_ADDR_NOCACHE_NOALLOC 0x13000000
+#define FLASH_ADDR_NOCACHE_NOALLOC XIP_NOCACHE_NOALLOC_BASE
 #else
 // simulated flash
 #define FLASH_ADDR_NOCACHE_NOALLOC sim_flash_buf
