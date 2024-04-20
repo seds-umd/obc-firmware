@@ -24,15 +24,29 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/external/littlefs
 )
 
-# Program both application and bootloader
+# Flash both application and bootloader
 install(CODE "execute_process(
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program bootloader.elf; program application.elf verify reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program bootloader.elf verify; program application.elf verify reset exit\"
 )")
+
+# Flash application
+add_custom_target(install_app
+    DEPENDS application
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; program application.elf verify reset exit\"
+    COMMENT "Installing application"
+)
+
+# Flash bootloader
+add_custom_target(install_bl
+    DEPENDS bootloader
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; program bootloader.elf verify reset exit\"
+    COMMENT "Installing bootloader"
+)
 
 # Reset RP2040 without programming
 add_custom_target(reset
     COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"init\; reset halt\; rp2040.core1 arp_reset assert 0\; rp2040.core0 arp_reset assert 0\; exit\"
-    COMMENT "Resetting..."
+    COMMENT "Resetting"
 )
 
 ###### Application ######
@@ -55,7 +69,8 @@ add_executable(application
     external/littlefs/lfs.c
 )
 
-pico_enable_stdio_usb(application 1)
+pico_enable_stdio_usb(application 0)
+pico_enable_stdio_uart(application 0)
 
 target_link_libraries(application
     pico_multicore
@@ -82,6 +97,7 @@ target_compile_options(application PUBLIC
 pico_add_extra_outputs(application)
 
 ###### Bootloader ######
+
 add_executable(bootloader
     src/bootloader/main.c
 )
@@ -98,6 +114,7 @@ target_compile_options(bootloader PUBLIC
     -Wall
     -Wextra
     -fstack-usage
+    -Os
 )
 
 pico_add_extra_outputs(bootloader)
