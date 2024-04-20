@@ -7,12 +7,12 @@ import logging
 import struct
 import time
 
+import updater
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
 from telemetry import Telemetry
-from updater import Updater
 
 SHELL_HEADER = """\
 OBC shell
@@ -237,7 +237,7 @@ class Obc(LstHandler):
 
         self.gpio = Gpio(self)
         self.flash = Flash(self)
-        self.updater = Updater(self)
+        self.updater = updater.Updater(self)
 
     def obc_cmd(self, opcode: int, data: bytes = bytes(), resp: bool = False):
         # Send command in OBC command format, returns response or sequence

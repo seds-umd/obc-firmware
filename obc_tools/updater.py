@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from obc import Obc
+import obc
 from obc_commands import ObcCmds
 from openlst_tools.handler import Packet
 from openlst_tools.utils import unpack_cint, pack_cint
@@ -58,17 +58,17 @@ class UpdateStatus(TypedDict):
         return status
 
 class Updater:
-    def __init__(self, obc: Obc) -> None:
+    def __init__(self, obc: obc.Obc) -> None:
         self.obc = obc
 
     def do_update(self, image: bytes):
         # Pad with zeros to fit into chunks
         if len(image) % 128 != 0:
             image = bytearray(image)
-            image.extend([0] * len(image) % 128)
+            image.extend([0] * (128 - len(image) % 128))
 
         # TODO
-    
+
     def _init(self, image: bytes):
         msg = bytearray()
 

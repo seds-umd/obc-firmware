@@ -246,7 +246,7 @@ void updater_populate_status(openlst_packet_t *reply) {
     uint32_t update_size = get_update_size();
     uint16_t remaining = count_remaining_chunks();
     uint32_t crc_expected = *(flash_read + BL_UPDATE_HEADER_CRC);
-    uint8_t crc_match = 0;
+    uint8_t crc_match = 0; // 1 if CRC matches
     uint8_t addr_count = 0;
 
     if (remaining == 0) {
@@ -259,8 +259,10 @@ void updater_populate_status(openlst_packet_t *reply) {
 
         if (crc_match == 0) {
             state = UPDATER_ERR_CRC_MISMATCH;
+        } else if (crc_match & (remaining == 0)) {
+            state = UPDATER_READY;
         }
-    } else {
+    } else if (state == UPDATER_WAITING) {
         // Only record addresses if there's unwritten chunks
         // Include up to 96 chunk addresses
         uint16_t addr = last_addr_checked;
@@ -274,7 +276,7 @@ void updater_populate_status(openlst_packet_t *reply) {
                 addr++;
 
                 if (addr > update_size) {
-                    addr &= update_size;
+                    addr %= update_size;
                 }
 
                 if (addr == last_addr_checked) {
@@ -285,14 +287,12 @@ void updater_populate_status(openlst_packet_t *reply) {
 
             if (done) break;
 
-            addr_list[i] = addr;
+            *((uint8_t *) (addr_list + i)) = *((uint8_t *) &addr);
+            *(((uint8_t *) (addr_list + i)) + 1) = *(((uint8_t *) &addr) + 1);
+
             addr_count++;
             addr++;
         }
-    }
-
-    if (crc_match & (remaining == 0)) {
-        state = UPDATER_READY;
     }
 
     // Populate reply packet
@@ -309,6 +309,11 @@ void updater_populate_status(openlst_packet_t *reply) {
 
 int updater_send_status(packet_t *pkt) {
     openlst_packet_t *reply = openlst_get_tx_buffer();
+
+    if (reply == NULL) {
+        return 0;
+    }
+
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->pld.gnd_cmd.opcode = 0x33;
 
