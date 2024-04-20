@@ -62,7 +62,10 @@ void set_update_status(uint16_t addr) {
 }
 
 uint8_t get_application_valid() {
-    return *(flash_read + BL_PROGRAM_HEADER_VALID);
+    uint8_t valid = *(flash_read + BL_PROGRAM_HEADER_VALID);
+    
+    if (valid == 0) return 8;
+    else return __builtin_ctz(valid);
 }
 
 void set_application_valid(uint8_t state) {
@@ -82,6 +85,33 @@ void set_application_valid(uint8_t state) {
     if (*(flash_read + BL_PROGRAM_HEADER_VALID) != valid) {
         // Try again I guess? Not much else we can do here
         flash_range_program((BL_PROGRAM_HEADER_VALID) & ~(0xFFu), buf, 256);
+    }
+}
+
+uint8_t get_update_valid() {
+    uint8_t valid = *(flash_read + BL_UPDATE_HEADER_VALID);
+
+    if (valid == 0) return 8;
+    else return __builtin_ctz(valid);
+}
+
+void set_update_valid(uint8_t state) {
+    if (state > 8) {
+        state = 8;
+    }
+
+    uint8_t buf[256];
+    memset(buf, 0xFF, 256);
+
+    // Set state bits low
+    uint8_t valid = ~((1 << state) - 1);
+    buf[255] &= valid;
+
+    flash_range_program((BL_UPDATE_HEADER_VALID) & ~(0xFFu), buf, 256);
+
+    if (*(flash_read + BL_UPDATE_HEADER_VALID) != valid) {
+        // Try again I guess? Not much else we can do here
+        flash_range_program((BL_UPDATE_HEADER_VALID) & ~(0xFFu), buf, 256);
     }
 }
 
@@ -125,8 +155,23 @@ uint16_t count_remaining_chunks() {
 }
 
 void updater_process() {
+    static sent = 0;
     switch (state) {
-        case UPDATER_IDLE:
+        case UPDATER_IDLE:;
+            // Check to see if there was an update that was interrupted
+            uint8_t valid = get_update_valid();
+
+            if (sent == 0) {
+                log_fmt("valid: %d", valid);
+                sent = 1;
+            }
+
+            if (valid == 1) {
+                state = UPDATER_INIT;
+                init_state = 2;
+            } else if (valid == 2) {
+                state = UPDATER_WAITING;
+            }
             break;
 
         case UPDATER_INIT:
@@ -162,13 +207,14 @@ int updater_start_init(packet_t *pkt) {
 
 int updater_try_init() {
     switch (init_state) {
-        case 0:  // Erase staging slot
-            // TODO: break this up into multiple calls
-            flash_range_erase(BL_UPDATE_START, BL_UPDATE_SIZE);
+        case 0:  // Erase header slot
+            flash_range_erase(BL_UPDATE_HEADER_START, BL_UPDATE_HEADER_SIZE);
             break;
 
-        case 1:  // Erase header slot
-            flash_range_erase(BL_UPDATE_HEADER_START, BL_UPDATE_HEADER_SIZE);
+        case 1:  // Erase staging slot
+            // TODO: break this up into multiple calls
+            flash_range_erase(BL_UPDATE_START, BL_UPDATE_SIZE);
+            set_update_valid(1);
             break;
 
         case 2:;  // Program header
@@ -179,6 +225,7 @@ int updater_try_init() {
             buf[1] = current_update_crc;
 
             flash_range_program(BL_UPDATE_HEADER_START, (uint8_t *)buf, 256);
+            set_update_valid(2);
             break;
 
         default:
@@ -219,13 +266,13 @@ int updater_write_chunk(packet_t *pkt) {
 
     // Read back data from flash and compare to packet
     int match = 0;
-    uint32_t *expected = (uint32_t *)(half_page);
-    volatile uint32_t *actual =
-        (uint32_t *)(flash_read + addr_flash + addr_half_page * 128);
+    volatile uint8_t *actual = flash_read + addr_flash + addr_half_page * 128;
 
-    for (uint8_t i = 0; i < 128 / sizeof(uint32_t); i++) {
+    // TODO: do one word at a time instead of one byte, will need to deal with
+    // unaligned array from packet struct
+    for (uint8_t i = 0; i < 128 / sizeof(actual[0]); i++) {
         // If any bit is different, match won't be 0
-        match |= actual[i] ^ expected[i];
+        match |= actual[i] ^ half_page[i];
     }
 
     if (match == 0) {
@@ -246,10 +293,10 @@ void updater_populate_status(openlst_packet_t *reply) {
     uint32_t update_size = get_update_size();
     uint16_t remaining = count_remaining_chunks();
     uint32_t crc_expected = *(flash_read + BL_UPDATE_HEADER_CRC);
-    uint8_t crc_match = 0; // 1 if CRC matches
+    uint8_t crc_match = 0;  // 1 if CRC matches
     uint8_t addr_count = 0;
 
-    if (remaining == 0) {
+    if ((remaining == 0) & (state == UPDATER_WAITING)) {
         // Only check CRC if all data has already been written
 
         uint32_t crc_actual = calc_crc32(
@@ -261,6 +308,7 @@ void updater_populate_status(openlst_packet_t *reply) {
             state = UPDATER_ERR_CRC_MISMATCH;
         } else if (crc_match & (remaining == 0)) {
             state = UPDATER_READY;
+            set_update_valid(8);
         }
     } else if (state == UPDATER_WAITING) {
         // Only record addresses if there's unwritten chunks
@@ -287,8 +335,8 @@ void updater_populate_status(openlst_packet_t *reply) {
 
             if (done) break;
 
-            *((uint8_t *) (addr_list + i)) = *((uint8_t *) &addr);
-            *(((uint8_t *) (addr_list + i)) + 1) = *(((uint8_t *) &addr) + 1);
+            *((uint8_t *)(addr_list + i)) = *((uint8_t *)&addr);
+            *(((uint8_t *)(addr_list + i)) + 1) = *(((uint8_t *)&addr) + 1);
 
             addr_count++;
             addr++;
@@ -333,7 +381,7 @@ void __not_in_flash_func(finalize_update)() {
         flash_range_erase(BL_APP_START, BL_APP_SIZE);
 
         // Set valid to indicate slot is erased
-        set_application_valid(0b11111110);
+        set_application_valid(1);
 
         // Program header with size and CRC
         uint32_t buf[64];
@@ -348,7 +396,7 @@ void __not_in_flash_func(finalize_update)() {
         flash_range_program(BL_PROGRAM_HEADER_START, (uint8_t *)buf, 256);
 
         // Set valid to indicate header is written
-        set_application_valid(0b11111100);
+        set_application_valid(2);
 
         // Copy update slot into application slot
         for (uint32_t i = 0; i < size; i += 256) {
@@ -363,7 +411,7 @@ void __not_in_flash_func(finalize_update)() {
 
         if (crc == crc_actual) {
             // Set valid byte to indicate update is successful
-            set_application_valid(0);
+            set_application_valid(8);
             break;
         } else {
             // If CRC doesn't match, retry

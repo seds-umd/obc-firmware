@@ -57,6 +57,12 @@ Valid byte:
 
 In the update status, each bit corresponds to a half page (128 bytes) in the update slot. If the bit is a 1, the half page has not been written to yet. If it's a 0, the page has been written. 512 bytes * 8 bits/byte * 128 bytes/bit = 512 kB.
 
+Valid byte:
+* 0b1111_1111 - default erase state, assume slot is invalid
+* 0b1111_1110 - update slot erased but not written to
+* 0b1111_1100 - update header valid, some update data may be written
+* 0b0000_0000 - update ready to be applied
+
 ## Update Process
 
 1. Receive update initialization command (includes size, CRC)
