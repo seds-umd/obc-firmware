@@ -18,41 +18,41 @@
 ////////// Ground Commands //////////
 
 typedef union {
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint32_t pin;
         uint8_t pin_op;
     } gpio;
 
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint32_t pin_mode;
         uint32_t pin_state;
     } gpio_state;
 
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint8_t cmd;
 
         union {
-            __packed struct {
+            struct __attribute__ ((__packed__)) {
                 uint8_t addr[3];
                 uint8_t size;
             } read;
 
-            __packed struct {
+            struct __attribute__ ((__packed__)) {
                 uint8_t addr[3];
                 // Data length dictated by buffer in openlst_packet_payload_t
                 uint8_t data[1];
             } program;
 
-            __packed struct {
+            struct __attribute__ ((__packed__)) {
                 uint8_t addr[3];
                 uint8_t size;
             } erase;
 
-            __packed struct {
+            struct __attribute__ ((__packed__)) {
                 uint8_t data[1];
             } read_resp;
 
-            __packed struct {
+            struct __attribute__ ((__packed__)) {
                 uint64_t unique_id;
             } unique_id_resp;
         };
@@ -60,17 +60,17 @@ typedef union {
 
     struct telem_struct telem;
 
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint32_t size;
         uint32_t crc32;
     } update_init;
 
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint16_t addr;
         uint8_t data[128];
     } update_chunk;
 
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         int8_t update_status;
         uint8_t crc_matched;
         uint32_t crc_expected;
@@ -104,7 +104,7 @@ typedef enum {
     // TODO: other commands and custom commands
 } openlst_command_t;
 
-typedef __packed struct {
+typedef struct __attribute__ ((__packed__)) {
     uint16_t hwid;
     uint16_t seq;
     uint8_t system;
@@ -120,14 +120,14 @@ typedef union {
     // TODO
 
     // Ground commands
-    __packed struct {
+    struct __attribute__ ((__packed__)) {
         uint8_t opcode;
         command_t msg;
     } gnd_cmd;
 } openlst_packet_payload_t;
 
 /// @brief OpenLST packet structure
-typedef __packed struct {
+typedef struct __attribute__ ((__packed__)) {
     // Actual packet is 251 bytes long
     openlst_packet_header_t hdr;
     openlst_packet_payload_t pld;
@@ -140,7 +140,7 @@ typedef __packed struct {
 #define PACKET_TYPE_OPENLST 1
 #define PACKET_TYPE_PIB 2
 
-typedef __packed struct {
+typedef struct __attribute__ ((__packed__)) {
     int type;
     union {
         openlst_packet_t *lst_pkt;
