@@ -63,9 +63,11 @@ void set_update_status(uint16_t addr) {
 
 uint8_t get_application_valid() {
     uint8_t valid = *(flash_read + BL_PROGRAM_HEADER_VALID);
-    
-    if (valid == 0) return 8;
-    else return __builtin_ctz(valid);
+
+    if (valid == 0)
+        return 8;
+    else
+        return __builtin_ctz(valid);
 }
 
 void set_application_valid(uint8_t state) {
@@ -91,8 +93,10 @@ void set_application_valid(uint8_t state) {
 uint8_t get_update_valid() {
     uint8_t valid = *(flash_read + BL_UPDATE_HEADER_VALID);
 
-    if (valid == 0) return 8;
-    else return __builtin_ctz(valid);
+    if (valid == 0)
+        return 8;
+    else
+        return __builtin_ctz(valid);
 }
 
 void set_update_valid(uint8_t state) {
@@ -155,16 +159,10 @@ uint16_t count_remaining_chunks() {
 }
 
 void updater_process() {
-    static sent = 0;
     switch (state) {
         case UPDATER_IDLE:;
             // Check to see if there was an update that was interrupted
             uint8_t valid = get_update_valid();
-
-            if (sent == 0) {
-                log_fmt("valid: %d", valid);
-                sent = 1;
-            }
 
             if (valid == 1) {
                 state = UPDATER_INIT;
@@ -248,7 +246,7 @@ int updater_write_chunk(packet_t *pkt) {
 
     // Physical flash address of start of page
     uint32_t addr_flash = BL_UPDATE_START + (addr << 7);
-    addr_flash = addr_flash - addr_flash % 256;
+    addr_flash &= 0xFFFF00;
 
     if ((addr_flash < BL_UPDATE_START) |
         (addr_flash >= BL_UPDATE_START + BL_UPDATE_SIZE)) {
@@ -292,15 +290,15 @@ void updater_populate_status(openlst_packet_t *reply) {
 
     uint32_t update_size = get_update_size();
     uint16_t remaining = count_remaining_chunks();
-    uint32_t crc_expected = *(flash_read + BL_UPDATE_HEADER_CRC);
+    uint32_t crc_expected = *((uint32_t *)(flash_read + BL_UPDATE_HEADER_CRC));
     uint8_t crc_match = 0;  // 1 if CRC matches
     uint8_t addr_count = 0;
 
     if ((remaining == 0) & (state == UPDATER_WAITING)) {
         // Only check CRC if all data has already been written
 
-        uint32_t crc_actual = calc_crc32(
-            (uint32_t *)(flash_read + BL_UPDATE_START), update_size / 4);
+        uint32_t crc_actual =
+            calc_crc32(flash_read + BL_UPDATE_START, update_size);
 
         crc_match = (crc_expected == crc_actual) ? 1 : 0;
 
@@ -320,18 +318,18 @@ void updater_populate_status(openlst_packet_t *reply) {
             int done = 0;
 
             // Look through each address to see if it's complete or not
-            while (get_update_status(addr) == 0) {
+            do {
                 addr++;
 
-                if (addr > update_size) {
-                    addr %= update_size;
+                if (addr >= (update_size / 128)) {
+                    addr %= (update_size / 128);
                 }
 
                 if (addr == last_addr_checked) {
                     done = 1;
                     break;
                 }
-            }
+            } while (get_update_status(addr) == 0);
 
             if (done) break;
 
@@ -339,8 +337,9 @@ void updater_populate_status(openlst_packet_t *reply) {
             *(((uint8_t *)(addr_list + i)) + 1) = *(((uint8_t *)&addr) + 1);
 
             addr_count++;
-            addr++;
         }
+
+        last_addr_checked = addr;
     }
 
     // Populate reply packet
@@ -406,8 +405,7 @@ void __not_in_flash_func(finalize_update)() {
         }
 
         // Verify CRC
-        uint32_t crc_actual =
-            calc_crc32((uint32_t *)(flash_read + BL_APP_START), size / 4);
+        uint32_t crc_actual = calc_crc32(flash_read + BL_APP_START, size);
 
         if (crc == crc_actual) {
             // Set valid byte to indicate update is successful
