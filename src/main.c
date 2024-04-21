@@ -34,6 +34,7 @@ int main() {
     scheduler_init();
 
     log_msg("booted");
+    log_fmt("compiled at %s", __TIME__);
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);

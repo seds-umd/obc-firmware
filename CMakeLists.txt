@@ -96,6 +96,12 @@ target_compile_options(application PUBLIC
 
 pico_add_extra_outputs(application)
 
+# Force main.c to be rebuilt
+add_custom_target(file_toucher 
+        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c)
+
+add_dependencies(application file_toucher)
+
 ###### Bootloader ######
 
 add_executable(bootloader
