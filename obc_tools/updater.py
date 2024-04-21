@@ -119,7 +119,10 @@ class Updater:
         print("Applying update.")
 
         # Finish update
-        self._apply_update()
+        done = self._apply_update()
+
+        if not done:
+            print("No ACK received, update may not work")
 
     def _init(self, image: bytes):
         msg = bytearray()
@@ -147,5 +150,6 @@ class Updater:
         return UpdateStatus.decode(reply["data"][1:])
 
     def _apply_update(self):
-        # self.obc.obc_cmd(ObcCmds.UPDATE_APPLY, resp=True)
-        self.obc.obc_cmd(ObcCmds.UPDATE_APPLY, resp=False)
+        reply = self.obc.obc_cmd(ObcCmds.UPDATE_APPLY, resp=True)
+
+        return reply["data"][0] == 0x00 and reply["data"][1] == 0x00

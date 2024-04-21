@@ -18,6 +18,8 @@
 ////////// Ground Commands //////////
 
 typedef union {
+    uint8_t ack;
+
     struct __attribute__ ((__packed__)) {
         uint32_t pin;
         uint8_t pin_op;

@@ -268,3 +268,7 @@ void __not_in_flash_func(openlst_dma_isr)() {
         openlst_tx_dma(pkt);
     }
 }
+
+int openlst_done() {
+    return queue_get_level(&tx_buf_queue) == 0;
+}

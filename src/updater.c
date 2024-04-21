@@ -426,8 +426,20 @@ int updater_apply_update(packet_t *pkt) {
     UNUSED(pkt);
 
     // Send ACK
+    openlst_packet_t *reply = openlst_get_tx_buffer();
+    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+    reply->hdr.command = 0x00;
+    reply->pld.gnd_cmd.opcode = 0x00;
+    reply->pld.gnd_cmd.msg.ack = 0;
+    reply->len = OPENLST_HEADER_SIZE + 2;
 
-    // Turn off interrupts
+    uint16_t seq = reply->hdr.seq;
+
+    // Send ACK and wait for it to transmit
+    openlst_tx(reply);
+    while (!openlst_done());
+
+    // Turn off interrupts, ignoring UART data after this
     save_and_disable_interrupts();
 
     finalize_update();

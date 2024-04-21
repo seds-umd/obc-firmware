@@ -79,3 +79,10 @@ int openlst_tx(openlst_packet_t *pkt);
  * 
  */
 void openlst_dma_isr();
+
+/**
+ * @brief Returns 1 if no packets are waiting to be sent.
+ * 
+ * @return int 
+ */
+int openlst_done();
