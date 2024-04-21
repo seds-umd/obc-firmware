@@ -2,21 +2,21 @@
 
 #include <stdint.h>
 
-uint32_t calc_crc32(uint32_t *buf, uint32_t size) {
+uint32_t calc_crc32(uint8_t *buf, uint8_t size) {
     int chan = dma_claim_unused_channel(true);
 
     uint32_t dummy_write;
 
     // DMA setup
     dma_channel_config c = dma_channel_get_default_config(chan);
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_read_increment(&c, true);
     channel_config_set_write_increment(&c, false);
 
     // CRC setup
     channel_config_set_sniff_enable(&c, true);
     dma_sniffer_set_data_accumulator(0xFFFFFFFF);  // CRC initial value
-    dma_sniffer_enable(chan, DMA_SNIFF_CTRL_CALC_VALUE_CRC32R, true);
+    dma_sniffer_enable(chan, DMA_SNIFF_CTRL_CALC_VALUE_CRC32, true);
 
     // Run DMA and wait for it to finish
     dma_channel_configure(chan, &c, &dummy_write, buf, size, true);
