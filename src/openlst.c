@@ -113,8 +113,6 @@ void __not_in_flash_func(openlst_uart_isr)() {
 }
 
 void openlst_process() {
-    // TODO: test entire function, lots of places for off by one errors
-
     uint16_t buf_len = rx_buffer_len();
 
     // Loop until buffer is empty or only a partial packet remains
@@ -151,25 +149,22 @@ void openlst_process() {
             return;
         }
 
-        // Packet starts 3 bytes after read pointer (ignoring start and length)
-        uint8_t *pkt = rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN;
-
-        // Use an intermediate buffer if the packet wraps around the end of
-        // the RX buffer.
+        // Copy packet into a new buffer to prevent overwriting rx_buf
         if ((rx_buf_rd + 3) % OPENLST_RX_BUF_LEN + pkt_len >=
             OPENLST_RX_BUF_LEN) {
+            // Handle wraparound
             int count = OPENLST_RX_BUF_LEN - (rx_buf_rd + 3);
             memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, count);
             memcpy(pkt_buf + count, rx_buf, pkt_len - count);
-
-            pkt = pkt_buf;
+        } else {
+            memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, pkt_len);
         }
 
         // Move read pointer to after packet
         rx_buf_rd = (rx_buf_rd + pkt_len + 3) % OPENLST_RX_BUF_LEN;
         buf_len -= pkt_len + 3;
 
-        openlst_handle_packet(pkt, pkt_len);
+        openlst_handle_packet(pkt_buf, pkt_len);
     }
 }
 
