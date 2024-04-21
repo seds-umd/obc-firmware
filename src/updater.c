@@ -265,7 +265,8 @@ int updater_write_chunk(packet_t *pkt) {
 
     // Read back data from flash and compare to packet
     int match = 0;
-    volatile uint8_t *actual = flash_read + addr_flash + addr_half_page * 128;
+    volatile const uint8_t *actual =
+        flash_read + addr_flash + addr_half_page * 128;
 
     // TODO: do one word at a time instead of one byte, will need to deal with
     // unaligned array from packet struct
@@ -299,7 +300,7 @@ void updater_populate_status(openlst_packet_t *reply) {
         // Only check CRC if all data has already been written
 
         uint32_t crc_actual =
-            calc_crc32(flash_read + BL_UPDATE_START, update_size);
+            calc_crc32((uint8_t *)flash_read + BL_UPDATE_START, update_size);
 
         crc_match = (crc_expected == crc_actual) ? 1 : 0;
 
@@ -406,7 +407,8 @@ void __not_in_flash_func(finalize_update)() {
         }
 
         // Verify CRC
-        uint32_t crc_actual = calc_crc32(flash_read + BL_APP_START, size);
+        uint32_t crc_actual =
+            calc_crc32((uint8_t *)flash_read + BL_APP_START, size);
 
         if (crc == crc_actual) {
             // Set valid byte to indicate update is successful
@@ -433,11 +435,10 @@ int updater_apply_update(packet_t *pkt) {
     reply->pld.gnd_cmd.msg.ack = 0;
     reply->len = OPENLST_HEADER_SIZE + 2;
 
-    uint16_t seq = reply->hdr.seq;
-
     // Send ACK and wait for it to transmit
     openlst_tx(reply);
-    while (!openlst_done());
+    while (!openlst_done())
+        ;
 
     // Turn off interrupts, ignoring UART data after this
     save_and_disable_interrupts();
