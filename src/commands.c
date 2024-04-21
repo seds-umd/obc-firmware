@@ -36,7 +36,7 @@ void command_setup() {
     command_register(0x30, updater_start_init);
     command_register(0x31, updater_write_chunk);
     command_register(0x32, updater_send_status);
-    command_register(0x33, updater_apply_update);
+    command_register(0x34, updater_apply_update);
 
     // Control commands
     command_register(0x40, command_openlst_pwr);

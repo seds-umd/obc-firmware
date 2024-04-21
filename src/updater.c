@@ -7,6 +7,7 @@
 #include "openlst.h"
 
 #include "hardware/flash.h"
+#include "hardware/sync.h"
 #include "hardware/watchdog.h"
 
 #include <string.h>
@@ -70,7 +71,7 @@ uint8_t get_application_valid() {
         return __builtin_ctz(valid);
 }
 
-void set_application_valid(uint8_t state) {
+void __not_in_flash_func(set_application_valid)(uint8_t state) {
     if (state > 8) {
         state = 8;
     }
@@ -399,9 +400,9 @@ void __not_in_flash_func(finalize_update)() {
 
         // Copy update slot into application slot
         for (uint32_t i = 0; i < size; i += 256) {
-            flash_range_program(BL_APP_START + i,
-                                (uint8_t *)flash_read + BL_UPDATE_START + i,
-                                256);
+            uint8_t buf[256];
+            memcpy(buf, (uint8_t *)flash_read + BL_UPDATE_START + i, 256);
+            flash_range_program(BL_APP_START + i, buf, 256);
         }
 
         // Verify CRC
@@ -425,7 +426,9 @@ int updater_apply_update(packet_t *pkt) {
     UNUSED(pkt);
 
     // Send ACK
+
     // Turn off interrupts
+    save_and_disable_interrupts();
 
     finalize_update();
 

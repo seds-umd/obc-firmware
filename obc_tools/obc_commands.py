@@ -11,6 +11,7 @@ class ObcCmds:
     UPDATE_CHUNK = 0x31
     UPDATE_STATUS_REQ = 0x32
     UPDATE_STATUS = 0x33
+    UPDATE_APPLY = 0x34
 
     OPENLST_PWR = 0x40
     GPIO = 0x80
