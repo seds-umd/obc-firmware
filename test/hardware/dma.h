@@ -17,7 +17,8 @@
 #define DREQ_UART0_TX 0
 #define DREQ_UART1_TX 0
 #define DMA_IRQ_0 0
-#define DMA_SNIFF_CTRL_CALC_VALUE_CRC32R 0
+#define DMA_SNIFF_CTRL_CALC_VALUE_CRC32 0
+#define DMA_SNIFF_CTRL_CALC_VALUE_CRC32R 1
 
 typedef struct {
     uint32_t ctrl;
