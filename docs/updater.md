@@ -29,7 +29,7 @@ In each section below, the addresses are relative to the start of the section.
 
 Much of the space in the program header and update header is reserved and unused because they need to be in separate erase blocks, which are 4 kB in size.
 
-### Program Header
+### Application Header
 
 | Start  | End    | Size | Description |
 | ------ | ------ | ---- | ----------- |
@@ -95,7 +95,7 @@ TBD:
 
 * Power loss during a write or erase
   * Page will be corrupted, need to restart the entire update process
-  * Last byte in program header and update header is a valid byte, only written after the section is successfully programmed and verified. If this is not set, it would indicate an update process was interrupted.
+  * Last byte in application header and update header is a valid byte, only written after the section is successfully programmed and verified. If this is not set, it would indicate an update process was interrupted.
   * If this happens while writing a chunk, the next time the chunk is written to it will not pass verification, see below.
 * Power loss after a chunk is written but before it is verified
   * The chunk will be assumed to be all 1s (the erased state of flash). Writing the same data to it will not change anything, so it will still pass verification.
@@ -111,18 +111,99 @@ Several potential faults result in the need to restart the entire update process
 
 ## Bootloader
 
-Design philosophy
-* Simple as possible
-* Don't use DMA, scheduling, any complex functionality - robustness is more important than performance
+The bootloader is intended to be as simple as possible. It should not use DMA, interrupts, or any other complex feature.
 
-### Function
+### Boot Process
 
-* Checks valid byte in program header before running code so an incomplete update won't be ran
-  * TODO: do we check CRC too? How long will that take?
-* If application code is invalid, attempt to complete update copying process. If this fails, tell PIB that we need a new image. PIB will upload new image to complete the update process.
-* PIB recovery process will write directly to the application slot because there's no point in using the update slot, but will still use the CRC check and valid byte in the program header
+1. Don't boot if any of the conditions occur:
+  1. Application header valid byte isn't valid
+  2. Application CRC doesn't match
+  3. Watchdog scratch matches bootloader magic
+2. If booting, wait for 1s then boot
+  1. If ping command received, set timeout to 5s and reset after each command received
+3. While idle, wait for and process commands
+4. When ready to boot:
+   1. Set VTOR to application slot location
+   2. Jump to reset vector from VTOR
 
-TODO: valid byte to indicate whether it's in the middle of a normal update or a PIB update
+#### Recovery
+
+If an application image needs to be written by the PIB:
+
+1. Bootloader doesn't boot application due to one of the reasons above
+2. PIB pings the bootloader to reset the watchdog, and will continue to do so at least every 5s to prevent it from resetting. If this is not done, it may be reset during a program or erase, which could corrupt data (but will not corrupt the bootloader itself).
+3. PIB sends BL_ERASE command to erase application slot and header
+4. PIB sends BL_HEADER command to write application header with size and CRC
+5. PIB sends BL_WRITE commands to write image
+6. PIB gets status using BL_STATUS_REQ
+   1. If CRC doesn't match, attempt writing entire image again
+
+### Commands
+
+Reuses the [OpenLST command protocol](https://github.com/seds-umd/openlst-software/tree/dev?tab=readme-ov-file#uart-protocol). HWID and system commands are ignored. Sequence number is respected, so replies to command should use the same sequence number and non-reply messages should start from a random sequence number and increment after each non-reply message.
+
+Commands are also similar to the OpenLST bootloader. If no message fields are describes, the message must be empty.
+
+#### 0x00 - BL_PING
+
+Pings bootloader. Returns BL_ACK and resets bootloader watchdog to 5s (without a ping it's set to 1s).
+
+#### 0x01 - BL_ACK
+
+ACK returned by bootloader.
+
+#### 0x02 - BL_WRITE
+
+Writes a section of data to the application image.
+
+| Field | Size |
+| ----- | ---- |
+| ADDR  | 2    |
+| DATA  | 128  |
+
+ADDR is the address of the data to write. The address is relative to the start of the application slot. The bottom 7 bits of the address are not included.
+
+DATA is the data to write to a given address.
+
+#### 0x03 - BL_STATUS_REQ
+
+Request bootloader status. If in the process of calculating the CRC for the status it matches the CRC written in the header, the header valid byte will be written to indicate a valid application.
+
+#### 0x04 - BL_STATUS
+
+Status returned by bootloader.
+
+| Field        | Size |
+| ------------ | ---- |
+| SIZE         | 4    |
+| CRC_EXPECTED | 4    |
+| CRC_ACTUAL   | 4    |
+| MATCH        | 1    |
+
+SIZE is the size of the update in bytes, read from application header.
+
+CRC_EXPECTED is the expected CRC, read from the application header.
+
+CRC_ACTUAL is the CRC calculated across the application slot from the given size. If SIZE is greater than 16 MB (the size of the flash used), the CRC is not calculated and this field is set to all 0s.
+
+MATCH is 1 if the CRCs match and 0 otherwise. This will also be 0 if SIZE is invalid.
+
+#### 0x05 - BL_HEADER
+
+Write the application header.
+
+| Field | Size |
+| ----- | ---- |
+| SIZE  | 4    |
+| CRC   | 4    |
+
+SIZE is the size of the image to be written, in bytes.
+
+CRC is the checksum of the image.
+
+#### 0x0C - BL_ERASE
+
+Erase the entire application slot and header.
 
 ## Misc Notes
 
