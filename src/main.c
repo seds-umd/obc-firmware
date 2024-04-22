@@ -10,6 +10,7 @@
 #include "updater.h"
 
 #include "hardware/gpio.h"
+#include "hardware/watchdog.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 
@@ -35,6 +36,13 @@ int main() {
 
     log_msg("booted");
     log_fmt("compiled at %s", __TIME__);
+
+    // Check if update was applied
+    if (watchdog_hw->scratch[0] == UPDATER_REBOOT_MAGIC) {
+        log_msg("Update applied successfully.");
+    }
+
+    watchdog_hw->scratch[0] = 0;
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);

@@ -57,3 +57,12 @@
 #ifndef SCHEDULER_MAX_TASKS
 #define SCHEDULER_MAX_TASKS 20
 #endif
+
+////////// UPDATER //////////
+// See bl_common.h for flash layout settings
+
+// Update chunk size
+#define UPDATER_CHUNK_SIZE 128
+
+// Written to watchdog scratch 0 to indicate an update was applied
+#define UPDATER_REBOOT_MAGIC 0x5aede6a9

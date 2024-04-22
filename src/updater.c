@@ -2,6 +2,7 @@
 
 #include "bl_common.h"
 #include "command_formats.h"
+#include "config.h"
 #include "crc32.h"
 #include "macros.h"
 #include "openlst.h"
@@ -11,6 +12,8 @@
 #include "hardware/watchdog.h"
 
 #include <string.h>
+
+#include "hardware/gpio.h"
 
 static enum UpdaterState state = UPDATER_IDLE;
 static int init_state = 0;
@@ -256,21 +259,23 @@ int updater_write_chunk(packet_t *pkt) {
     }
 
     // Fill half of page with received chunk
-    memcpy(buf + addr_half_page * 128, half_page, 128);
+    memcpy(buf + addr_half_page * UPDATER_CHUNK_SIZE, half_page,
+           UPDATER_CHUNK_SIZE);
 
     // Fill other half with 1s so it doesn't overwrite existing data
-    memset(buf + (addr_half_page ? 0 : 1) * 128, 0xFF, 128);
+    memset(buf + (addr_half_page ? 0 : 1) * UPDATER_CHUNK_SIZE, 0xFF,
+           UPDATER_CHUNK_SIZE);
 
     flash_range_program(addr_flash, buf, 256);
 
     // Read back data from flash and compare to packet
     int match = 0;
     volatile const uint8_t *actual =
-        flash_read + addr_flash + addr_half_page * 128;
+        flash_read + addr_flash + addr_half_page * UPDATER_CHUNK_SIZE;
 
     // TODO: do one word at a time instead of one byte, will need to deal with
     // unaligned array from packet struct
-    for (uint8_t i = 0; i < 128 / sizeof(actual[0]); i++) {
+    for (uint8_t i = 0; i < UPDATER_CHUNK_SIZE / sizeof(actual[0]); i++) {
         // If any bit is different, match won't be 0
         match |= actual[i] ^ half_page[i];
     }
@@ -323,8 +328,8 @@ void updater_populate_status(openlst_packet_t *reply) {
             do {
                 addr++;
 
-                if (addr >= (update_size / 128)) {
-                    addr %= (update_size / 128);
+                if (addr >= (update_size / UPDATER_CHUNK_SIZE)) {
+                    addr %= (update_size / UPDATER_CHUNK_SIZE);
                 }
 
                 if (addr == last_addr_checked) {
@@ -420,7 +425,10 @@ void __not_in_flash_func(finalize_update)() {
         }
     }
 
-    // If update is successful or attempted 3 time, reboot
+    // If update is successful or attempted 3 time, set watchdog scratch
+    // register to indicate update worked and then reboot
+
+    watchdog_hw->scratch[0] = UPDATER_REBOOT_MAGIC;
     watchdog_reboot(0, 0, 0);
 }
 

@@ -85,7 +85,8 @@ Valid byte:
    6. Verify contents of application slot against CRC in header
       1. If no match, erase and retry 2 more times, then go to bootloader for PIB recover
    7. Write valid byte to header to indicate success
-   8. Restart to boot into new image
+   8. Write a magic value to the watchdog scratch registers to indicate an update was successfully applied
+   9. Restart to boot into new image
 
 TBD:
 * Do we send an ACK after each chunk? The writing/verifying process will probably take longer than the time it takes to send a single packet (especially on the PIB interface), so some kind of flow control is needed. Maybe request an ACK every N (4-16ish) packets and don't send any packets until it's received (or a timeout is reached)?
