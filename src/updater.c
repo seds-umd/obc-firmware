@@ -27,6 +27,7 @@ static uint32_t current_update_size = 0;
 static volatile const uint8_t *const flash_read =
     (uint8_t *)FLASH_ADDR_NOCACHE_NOALLOC;
 
+// Returns 0 if update has been written
 static inline int get_update_status(uint16_t addr) {
     uint8_t status_byte = *(flash_read + BL_UPDATE_HEADER_STATUS + (addr >> 3));
 
@@ -321,29 +322,32 @@ void updater_populate_status(openlst_packet_t *reply) {
         uint16_t addr = last_addr_checked;
         uint16_t *addr_list = reply->pld.gnd_cmd.msg.update_status.chunk_addr;
 
-        for (int i = 0; i < 96; i++) {
-            int done = 0;
+        while (1) {
+            if (remaining == 1) {
+                // just stuff to prevent compiler from optimizing
+                unsigned char *pageptr = &addr;
+                ((unsigned char volatile *)pageptr)[0] = pageptr[0];
+            }
 
-            // Look through each address to see if it's complete or not
-            do {
-                addr++;
+            // Done if list is full
+            if (addr_count == 96) break;
 
-                if (addr >= (update_size / UPDATER_CHUNK_SIZE)) {
-                    addr %= (update_size / UPDATER_CHUNK_SIZE);
-                }
+            addr++;
 
-                if (addr == last_addr_checked) {
-                    done = 1;
-                    break;
-                }
-            } while (get_update_status(addr) == 0);
+            if (addr >= update_size / UPDATER_CHUNK_SIZE) {
+                addr %= update_size / UPDATER_CHUNK_SIZE;
+            }
 
-            if (done) break;
+            // Add to list if not yet written
+            if (get_update_status(addr) == 1) {
+                *((uint8_t *)(addr_list + addr_count)) = *((uint8_t *)&addr);
+                *(((uint8_t *)(addr_list + addr_count)) + 1) =
+                    *(((uint8_t *)&addr) + 1);
+                addr_count++;
+            }
 
-            *((uint8_t *)(addr_list + i)) = *((uint8_t *)&addr);
-            *(((uint8_t *)(addr_list + i)) + 1) = *(((uint8_t *)&addr) + 1);
-
-            addr_count++;
+            // Done if all addresses have been checked
+            if (addr == last_addr_checked) break;
         }
 
         last_addr_checked = addr;
