@@ -58,6 +58,9 @@
 #define SCHEDULER_MAX_TASKS 20
 #endif
 
+// Watchdog timeout - longest command should be program flash erase at 2s
+#define WATCHDOG_TIMEOUT_MS 8000
+
 ////////// UPDATER //////////
 // See bl_common.h for flash layout settings
 

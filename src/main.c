@@ -19,6 +19,8 @@
 #include <string.h>
 
 int main() {
+    watchdog_enable(WATCHDOG_TIMEOUT_MS, true);
+
     // First run of PRNG takes longer than normal because it has to generate a
     // seed so we run this first to get it out of the way.
     get_rand_32();
@@ -34,8 +36,12 @@ int main() {
 
     scheduler_init();
 
-    log_msg("booted");
-    log_fmt("compiled at %s", __TIME__);
+    log_fmt("Booted. Compiled at %s %s", __TIME__, __DATE__);
+
+    // Check if last reset was due to watchdog
+    if (watchdog_caused_reboot()) {
+        log_msg("Watchdog caused last reboot.");
+    }
 
     // Check if update was applied
     if (watchdog_hw->scratch[0] == UPDATER_REBOOT_MAGIC) {
@@ -55,11 +61,15 @@ int main() {
     scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
 
     // Updater
-    scheduler_add_task(updater_process, 50 * 1000);
+    scheduler_add_task(updater_process, 100 * 1000);
 
     command_setup();
 
     while (1) {
+        // Update watchdog every loop
+        watchdog_update();
+
+        // Run any scheduled tasks
         scheduler_run();
     }
 }
