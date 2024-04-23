@@ -13,19 +13,11 @@
 
 #include <string.h>
 
-#include "hardware/gpio.h"
-
 static enum UpdaterState state = UPDATER_IDLE;
 static int init_state = 0;
 
 static uint32_t current_update_crc = 0;
 static uint32_t current_update_size = 0;
-
-// Pointer to no-cache no-alloc section of flash. We don't want to waste cache
-// on this because whenever we want to read it, we'll want the latest version.
-// Made const so it errors if we try to write (which will fail at runtime).
-static volatile const uint8_t *const flash_read =
-    (uint8_t *)FLASH_ADDR_NOCACHE_NOALLOC;
 
 // Returns 0 if update has been written
 static inline int get_update_status(uint16_t addr) {
@@ -66,35 +58,6 @@ void set_update_status(uint16_t addr) {
     }
 }
 
-uint8_t get_application_valid() {
-    uint8_t valid = *(flash_read + BL_PROGRAM_HEADER_VALID);
-
-    if (valid == 0)
-        return 8;
-    else
-        return __builtin_ctz(valid);
-}
-
-void __not_in_flash_func(set_application_valid)(uint8_t state) {
-    if (state > 8) {
-        state = 8;
-    }
-
-    uint8_t buf[256];
-    memset(buf, 0xFF, 256);
-
-    // Set state bits low
-    uint8_t valid = ~((1 << state) - 1);
-    buf[255] &= valid;
-
-    flash_range_program((BL_PROGRAM_HEADER_VALID) & ~(0xFFu), buf, 256);
-
-    if (*(flash_read + BL_PROGRAM_HEADER_VALID) != valid) {
-        // Try again I guess? Not much else we can do here
-        flash_range_program((BL_PROGRAM_HEADER_VALID) & ~(0xFFu), buf, 256);
-    }
-}
-
 uint8_t get_update_valid() {
     uint8_t valid = *(flash_read + BL_UPDATE_HEADER_VALID);
 
@@ -122,20 +85,6 @@ void set_update_valid(uint8_t state) {
         // Try again I guess? Not much else we can do here
         flash_range_program((BL_UPDATE_HEADER_VALID) & ~(0xFFu), buf, 256);
     }
-}
-
-static inline uint32_t get_update_size() {
-    uint32_t size = *((uint32_t *)(flash_read + BL_UPDATE_HEADER_UPDATE_SIZE));
-
-    if (size == UINT32_MAX) {
-        return 0;
-    } else {
-        return size;
-    }
-}
-
-static inline uint32_t get_update_crc() {
-    return *((uint32_t *)(flash_read + BL_UPDATE_HEADER_CRC));
 }
 
 uint16_t count_remaining_chunks() {
@@ -243,50 +192,21 @@ int updater_try_init() {
 }
 
 int updater_write_chunk(packet_t *pkt) {
-    uint8_t buf[256];
     uint8_t *half_page = pkt->lst_pkt->pld.gnd_cmd.msg.update_chunk.data;
-
     uint16_t addr = pkt->lst_pkt->pld.gnd_cmd.msg.update_chunk.addr;
-    uint8_t addr_half_page = addr & 0x1;  // Get position within page
 
-    // Physical flash address of start of page
-    uint32_t addr_flash = BL_UPDATE_START + (addr << 7);
-    addr_flash &= 0xFFFF00;
+    int ret = write_chunk(BL_UPDATE_START, addr, half_page);
 
-    if ((addr_flash < BL_UPDATE_START) |
-        (addr_flash >= BL_UPDATE_START + BL_UPDATE_SIZE)) {
-        state = UPDATER_ERR_CHUNK_OOB;
-        return 0;
-    }
-
-    // Fill half of page with received chunk
-    memcpy(buf + addr_half_page * UPDATER_CHUNK_SIZE, half_page,
-           UPDATER_CHUNK_SIZE);
-
-    // Fill other half with 1s so it doesn't overwrite existing data
-    memset(buf + (addr_half_page ? 0 : 1) * UPDATER_CHUNK_SIZE, 0xFF,
-           UPDATER_CHUNK_SIZE);
-
-    flash_range_program(addr_flash, buf, 256);
-
-    // Read back data from flash and compare to packet
-    int match = 0;
-    volatile const uint8_t *actual =
-        flash_read + addr_flash + addr_half_page * UPDATER_CHUNK_SIZE;
-
-    // TODO: do one word at a time instead of one byte, will need to deal with
-    // unaligned array from packet struct
-    for (uint8_t i = 0; i < UPDATER_CHUNK_SIZE / sizeof(actual[0]); i++) {
-        // If any bit is different, match won't be 0
-        match |= actual[i] ^ half_page[i];
-    }
-
-    if (match == 0) {
+    if (ret == 0) {
         // Write successful, update status
         set_update_status(addr);
-    } else {
+    } else if (ret == 1) {
         // TODO: at least attempt to recover
         state = UPDATER_ERR_CHUNK_FAILED;
+    } else if (ret == 2) {
+        state = UPDATER_ERR_CHUNK_OOB;
+    } else {
+        state = UPDATER_ERR_UNKNOWN;
     }
 
     return 0;
@@ -379,7 +299,7 @@ int updater_send_status(packet_t *pkt) {
 void __not_in_flash_func(finalize_update)() {
     for (int attempt = 0; attempt < 3; attempt++) {
         // Erase header
-        flash_range_erase(BL_PROGRAM_HEADER_START, BL_PROGRAM_HEADER_SIZE);
+        flash_range_erase(BL_APP_HEADER_START, BL_APP_HEADER_SIZE);
 
         // Erase application slot
         flash_range_erase(BL_APP_START, BL_APP_SIZE);
@@ -397,7 +317,7 @@ void __not_in_flash_func(finalize_update)() {
         buf[0] = size;
         buf[1] = crc;
 
-        flash_range_program(BL_PROGRAM_HEADER_START, (uint8_t *)buf, 256);
+        flash_range_program(BL_APP_HEADER_START, (uint8_t *)buf, 256);
 
         // Set valid to indicate header is written
         set_application_valid(2);

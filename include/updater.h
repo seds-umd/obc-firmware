@@ -21,6 +21,7 @@ enum UpdaterState {
     UPDATER_ERR_STATUS_ADDR_OOB = -4,  // Status write address out of bounds
     UPDATER_ERR_CHUNK_OOB = -5,        // Chunk address out of bounds
     UPDATER_ERR_CRC_MISMATCH = -6,     // CRC doesn't match
+    UPDATER_ERR_UNKNOWN = -7,          // Unknown error
 };
 
 /**
@@ -70,7 +71,7 @@ int updater_send_status(packet_t *pkt);
 
 /**
  * @brief Apply update
- * 
+ *
  * @param pkt Incoming command packet
  */
 int updater_apply_update(packet_t *pkt);

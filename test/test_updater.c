@@ -145,7 +145,7 @@ void do_update(uint32_t update_size) {
         "Update not applied correctly");
 
     // Check valid byte
-    TEST_ASSERT_EQUAL_HEX8(0, *(sim_flash_buf + BL_PROGRAM_HEADER_VALID));
+    TEST_ASSERT_EQUAL_HEX8(0, *(sim_flash_buf + BL_APP_HEADER_VALID));
 
     // Clean up
     free(update_data);
