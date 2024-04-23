@@ -36,7 +36,7 @@ int main() {
 
     scheduler_init();
 
-    log_fmt("Booted. Compiled at %s %s", __TIME__, __DATE__);
+    log_fmt("Booted. Git hash: %s. Compiled at %s %s", GIT_HASH, __TIME__, __DATE__);
 
     // Check if last reset was due to watchdog
     if (watchdog_caused_reboot()) {

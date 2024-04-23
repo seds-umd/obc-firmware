@@ -49,6 +49,16 @@ add_custom_target(reset
     COMMENT "Resetting"
 )
 
+# Add git hash
+execute_process(
+    COMMAND git describe --abbrev=6 --dirty --always --tags
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+add_definitions("-DGIT_HASH=\"${GIT_HASH}\"")
+
 ###### Application ######
 
 add_executable(application
