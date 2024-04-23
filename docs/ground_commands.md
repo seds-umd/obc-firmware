@@ -191,6 +191,18 @@ Size: 1
 
 No message content. Commands an update to be applied.
 
+### 0x35 - UPDATE_READ
+
+| Field | Size |
+| ----- | ---- |
+| ADDR  | 4    |
+
+Reads a 128 byte chunk from an arbitrary section of flash.
+
+ADDR is the physical address in memory to start reading from. It is not required to be aligned to 128 bytes.
+
+Returns an UPDATE_CHUNK packet with the data. The ADDR field of the packet is unused.
+
 ### 0x40 - OPENLST_PWR
 
 Power cycles OpenLST. Message has no contents. After power cycle an ACK will be sent.

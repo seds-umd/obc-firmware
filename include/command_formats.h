@@ -80,6 +80,10 @@ typedef union {
         uint16_t chunks_remaining;
         uint16_t chunk_addr[96];
     } update_status;
+
+    struct __attribute__((__packed__)) {
+        uint32_t addr;
+    } update_read;
 } command_t;
 
 ////////// OpenLST Packets //////////

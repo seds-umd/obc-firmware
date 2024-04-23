@@ -115,12 +115,15 @@ add_dependencies(application file_toucher)
 ###### Bootloader ######
 
 add_executable(bootloader
-    src/bootloader/main.c
+    src/crc32.c
+    src/bootloader/bl_main.c
 )
 
 target_link_libraries(bootloader
     pico_stdlib
+    hardware_dma
     hardware_flash
+    hardware_spi
     cmsis_core
 )
 

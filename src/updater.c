@@ -336,6 +336,7 @@ void __not_in_flash_func(finalize_update)() {
         if (crc == crc_actual) {
             // Set valid byte to indicate update is successful
             set_application_valid(8);
+            watchdog_hw->scratch[0] = UPDATER_REBOOT_MAGIC;
             break;
         } else {
             // If CRC doesn't match, retry
@@ -345,8 +346,6 @@ void __not_in_flash_func(finalize_update)() {
 
     // If update is successful or attempted 3 time, set watchdog scratch
     // register to indicate update worked and then reboot
-
-    watchdog_hw->scratch[0] = UPDATER_REBOOT_MAGIC;
     watchdog_reboot(0, 0, 0);
 }
 

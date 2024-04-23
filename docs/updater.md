@@ -18,10 +18,10 @@ When changing the flash layout, also update `bl_common.h`.
 | Start     | End       | Size     | Access | Description                |
 | --------- | --------- | -------- | ------ | -------------------------- |
 | 0x00_0000 | 0x00_00FF | 256 B    | R      | boot2, pico-sdk bootloader |
-| 0x00_0100 | 0x00_3FFF | 15.75 kB | RX     | Our bootloader             |
-| 0x00_4000 | 0x00_4FFF | 4 kB     | RW     | Program header             |
-| 0x00_5000 | 0x00_5FFF | 4 kB     | RW     | Update header              |
-| 0x00_6000 | 0x07_FFFF | 488 kB   | RW     | Misc config data           |
+| 0x00_0100 | 0x00_7FFF | 31.75 kB | RX     | Our bootloader             |
+| 0x00_8000 | 0x00_8FFF | 4 kB     | RW     | Program header             |
+| 0x00_9000 | 0x00_9FFF | 4 kB     | RW     | Update header              |
+| 0x00_A000 | 0x07_FFFF | 472 kB   | RW     | Misc config data           |
 | 0x08_0000 | 0x0F_FFFF | 512 kB   | RWX    | Application slot           |
 | 0x10_0000 | 0x17_FFFF | 512 kB   | RW     | Update staging slot        |
 
@@ -144,6 +144,8 @@ Reuses the [OpenLST command protocol](https://github.com/seds-umd/openlst-softwa
 
 Commands are also similar to the OpenLST bootloader. If no message fields are describes, the message must be empty.
 
+If a command has no reply message defined, it will return an ACK/NACK message upon completion. No other command can be sent until then. If no ACK/NACK is received, the board must be power cycled.
+
 #### 0x00 - BL_PING
 
 Pings bootloader. Returns BL_ACK and resets bootloader watchdog to 5s (without a ping it's set to 1s).
@@ -201,6 +203,10 @@ SIZE is the size of the image to be written, in bytes.
 
 CRC is the checksum of the image.
 
+#### 0x06 - BL_FORCE_BOOT
+
+Force the bootloader to boot the current image, ignoring any checks.
+
 #### 0x0C - BL_ERASE
 
 Erase the entire application slot and header.
@@ -211,3 +217,6 @@ Erase the entire application slot and header.
 * Before starting the update process, zeros are appended to the end of the image to align it to 128 bytes. This means there will be no half filled chunks and simplifies everything.
 * 8192 chunks to fill a slot - addresses must be 16 bits
 * Flash erases and programs will block and prevent access to flash. Any interrupts must be executed from RAM and not access any flash.
+* Watchdog magics:
+  * scratch[0] = 0x5aede6a9 if last reboot was due to update
+  * scratch[0] = 0xacb09b3c if we want to stay in bootloader

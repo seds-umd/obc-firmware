@@ -1,5 +1,6 @@
 #include "commands.h"
 
+#include "bl_common.h"
 #include "command_handler.h"
 #include "flash.h"
 #include "logging.h"
@@ -21,6 +22,7 @@ static int command_gpio(packet_t *pkt);
 static int command_flash(packet_t *pkt);
 static int command_telem(packet_t *pkt);
 static int command_openlst_pwr(packet_t *pkt);
+static int command_update_read(packet_t *pkt);
 
 void command_setup() {
     command_init();
@@ -37,6 +39,7 @@ void command_setup() {
     command_register(0x31, updater_write_chunk);
     command_register(0x32, updater_send_status);
     command_register(0x34, updater_apply_update);
+    command_register(0x35, command_update_read);
 
     // Control commands
     command_register(0x40, command_openlst_pwr);
@@ -238,4 +241,18 @@ static int command_openlst_pwr(packet_t *pkt) {
     openlst_power_cycle();
 
     return 0;
+}
+
+static int command_update_read(packet_t *pkt) {
+    uint32_t addr = pkt->lst_pkt->pld.gnd_cmd.msg.update_read.addr;
+
+    openlst_packet_t *reply = openlst_get_tx_buffer();
+    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+    reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(reply->pld.gnd_cmd.msg.update_chunk);
+    reply->pld.gnd_cmd.opcode = 0x31;
+
+    // Copy data into packet
+    memcpy(reply->pld.gnd_cmd.msg.update_chunk.data, flash_read + addr, 128);
+
+    openlst_tx(reply);
 }

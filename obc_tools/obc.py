@@ -275,6 +275,17 @@ class Obc(LstHandler):
 
     def power_cycle_openlst(self):
         self.obc_cmd(ObcCmds.OPENLST_PWR)
+    
+    def update_read(self, addr: int):
+        assert addr >= 0 and addr < 2**24, "Address out of bounds"
+
+        msg = bytearray()
+        msg.extend(pack_cint(addr, 4, False))
+
+        reply: Packet = self.obc_cmd(ObcCmds.UPDATE_READ, resp=True)
+
+        # Return received data minus 1 byte opcode, 2 byte address
+        return reply["data"][1+2:]
 
 
 if __name__ == "__main__":

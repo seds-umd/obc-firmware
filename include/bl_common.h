@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include "hardware/flash.h"
 
 #include <string.h>
@@ -10,16 +12,16 @@
 #define BL_BOOT2_SIZE 0x100
 
 #define BL_BOOTLOADER_START 0x000100
-#define BL_BOOTLOADER_SIZE 0x3F00
+#define BL_BOOTLOADER_SIZE 0x7F00
 
-#define BL_APP_HEADER_START 0x004000
+#define BL_APP_HEADER_START 0x008000
 #define BL_APP_HEADER_SIZE 0x1000
 
-#define BL_UPDATE_HEADER_START 0x005000
+#define BL_UPDATE_HEADER_START 0x009000
 #define BL_UPDATE_HEADER_SIZE 0x1000
 
-#define BL_CONFIG_START 0x006000
-#define BL_CONFIG_SIZE 0xFA000
+#define BL_CONFIG_START 0x00A000
+#define BL_CONFIG_SIZE 0xF6000
 
 #define BL_APP_START 0x080000
 #define BL_APP_SIZE 0x80000
@@ -37,6 +39,14 @@
 #define BL_UPDATE_HEADER_CRC BL_UPDATE_HEADER_START + 0x0004
 #define BL_UPDATE_HEADER_STATUS BL_UPDATE_HEADER_START + 0x0400
 #define BL_UPDATE_HEADER_VALID BL_UPDATE_HEADER_START + 0x0FFF
+
+#ifdef __arm__
+// RP2040 no-cache no-alloc flash alias
+#define FLASH_ADDR_NOCACHE_NOALLOC XIP_NOCACHE_NOALLOC_BASE
+#else
+// simulated flash
+#define FLASH_ADDR_NOCACHE_NOALLOC sim_flash_buf
+#endif
 
 // Pointer to no-cache no-alloc section of flash. We don't want to waste cache
 // on this because whenever we want to read it, we'll want the latest version.
@@ -119,7 +129,7 @@ static inline uint32_t get_update_crc() {
  * @return uint32_t
  */
 static inline uint32_t get_application_size() {
-    uint32_t size = *((uint32_t *)(flash_read + BL_APP_HEADER_SIZE));
+    uint32_t size = *((uint32_t *)(flash_read + BL_APP_HEADER_APP_SIZE));
 
     if (size == UINT32_MAX) {
         return 0;
@@ -134,7 +144,7 @@ static inline uint32_t get_application_size() {
  * @return uint32_t
  */
 static inline uint32_t get_application_crc() {
-    return *((uint32_t *)(flash_read + BL_APP_HEADER_APP_SIZE));
+    return *((uint32_t *)(flash_read + BL_APP_HEADER_CRC));
 }
 
 /**
