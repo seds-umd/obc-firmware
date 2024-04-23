@@ -323,12 +323,6 @@ void updater_populate_status(openlst_packet_t *reply) {
         uint16_t *addr_list = reply->pld.gnd_cmd.msg.update_status.chunk_addr;
 
         while (1) {
-            if (remaining == 1) {
-                // just stuff to prevent compiler from optimizing
-                unsigned char *pageptr = &addr;
-                ((unsigned char volatile *)pageptr)[0] = pageptr[0];
-            }
-
             // Done if list is full
             if (addr_count == 96) break;
 
@@ -439,18 +433,48 @@ void __not_in_flash_func(finalize_update)() {
 int updater_apply_update(packet_t *pkt) {
     UNUSED(pkt);
 
-    // Send ACK
+    int ready = 1;
+
+    // Check if update slot is valid
+    if (get_update_valid() != 8) {
+        ready &= 0;
+    }
+
+    // Check if size is reasonable
+    uint32_t update_size = get_update_size();
+    if (update_size > 16 * 1024 * 1024) {
+        ready &= 0;
+    }
+
+    // Check if update CRC matches, but only if the other checks pass
+    if (ready) {
+        uint32_t crc_expected =
+            *((uint32_t *)(flash_read + BL_UPDATE_HEADER_CRC));
+        uint32_t crc_actual =
+            calc_crc32((uint8_t *)flash_read + BL_UPDATE_START, update_size);
+
+        if (crc_actual != crc_expected) {
+            ready &= 0;
+        }
+    }
+
+    // Send ACK (or NACK if update isn't ready)
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->hdr.command = 0x00;
     reply->pld.gnd_cmd.opcode = 0x00;
-    reply->pld.gnd_cmd.msg.ack = 0;
+    reply->pld.gnd_cmd.msg.ack = (ready == 1) ? 0 : 1;  // 0 is ACK, 1 is NACK
     reply->len = OPENLST_HEADER_SIZE + 2;
 
     // Send ACK and wait for it to transmit
     openlst_tx(reply);
     while (!openlst_done())
         ;
+
+    // Continue normally if update is not ready
+    if (!ready) {
+        return 0;
+    }
 
     // Turn off interrupts, ignoring UART data after this
     save_and_disable_interrupts();

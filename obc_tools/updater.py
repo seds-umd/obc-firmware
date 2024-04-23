@@ -119,10 +119,7 @@ class Updater:
         print("Applying update.")
 
         # Finish update
-        done = self._apply_update()
-
-        if not done:
-            print("No ACK received, update may not work")
+        self._apply_update()
 
     def _init(self, image: bytes):
         msg = bytearray()
@@ -152,4 +149,5 @@ class Updater:
     def _apply_update(self):
         reply = self.obc.obc_cmd(ObcCmds.UPDATE_APPLY, resp=True)
 
-        return reply["data"][0] == 0x00 and reply["data"][1] == 0x00
+        assert reply["data"][0] == 0x00, "Reply was not an ACK command"
+        assert reply["data"][1] == 0x00, "NACK returned, update is not ready"
