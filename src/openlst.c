@@ -157,7 +157,7 @@ void openlst_process() {
             memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, count);
             memcpy(pkt_buf + count, rx_buf, pkt_len - count);
         } else {
-            memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, pkt_len);
+            memcpy(pkt_buf, rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN, pkt_len);
         }
 
         // Move read pointer to after packet
