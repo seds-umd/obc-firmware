@@ -13,4 +13,4 @@
  * @param size Number of bytes to calculate CRC over
  * @return uint32_t
  */
-uint32_t calc_crc32(uint8_t *buf, uint32_t size);
+uint32_t calc_crc32(const volatile uint8_t *const buf, uint32_t size);

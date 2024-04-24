@@ -2,7 +2,8 @@
 
 #include <stdint.h>
 
-uint32_t __not_in_flash_func(calc_crc32)(uint8_t *buf, uint8_t size) {
+uint32_t __not_in_flash_func(calc_crc32)(const volatile uint8_t *const buf,
+                                         uint8_t size) {
     int chan = dma_claim_unused_channel(true);
 
     uint32_t dummy_write;
