@@ -152,7 +152,13 @@ Pings bootloader. Returns BL_ACK and resets bootloader watchdog to 5s (without a
 
 #### 0x01 - BL_ACK
 
+| Field | Size |
+| - | - |
+| NACK | 1 |
+
 ACK returned by bootloader.
+
+If NACK is 0, command was successful. If NACK is 1, command was unsuccessful.
 
 #### 0x02 - BL_WRITE
 

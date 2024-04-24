@@ -11,11 +11,6 @@
 
 #include <stdint.h>
 
-// Maximum size of an OpenLST packet, not including start bytes or size bytes
-#define OPENLST_MAX_PAYLOAD 251
-#define OPENLST_START_0 0x22
-#define OPENLST_START_1 0x69
-
 ////////// Ground Commands //////////
 
 typedef union {

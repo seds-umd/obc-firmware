@@ -34,6 +34,11 @@
 // 2s delay on power cycle before setting pin back to default
 #define OPENLST_POWER_CYCLE_DELAY_US 2000 * 1000
 
+// Packet format parameters, max_payload is not including start or length bytes
+#define OPENLST_MAX_PAYLOAD 251
+#define OPENLST_START_0 0x22
+#define OPENLST_START_1 0x69
+
 // PIB
 #define PIB_UART_ID uart1
 #define PIB_UART_BAUD 115200
