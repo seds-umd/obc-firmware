@@ -3,8 +3,17 @@ class ObcCmds:
     PING = 0x01
     MSG = 0x02
     REBOOT = 0x03
+
     TELEM_REQ = 0x10
     TELEM_RESP = 0x11
+
+    UPDATE_INIT = 0x30
+    UPDATE_CHUNK = 0x31
+    UPDATE_STATUS_REQ = 0x32
+    UPDATE_STATUS = 0x33
+    UPDATE_APPLY = 0x34
+    UPDATE_READ = 0x35
+
     OPENLST_PWR = 0x40
     GPIO = 0x80
     GPIO_STATE = 0x81

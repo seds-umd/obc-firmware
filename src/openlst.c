@@ -21,8 +21,8 @@
 // RX buffer
 static uint8_t rx_buf[OPENLST_RX_BUF_LEN];
 static uint8_t pkt_buf[OPENLST_MAX_PAYLOAD];
-static volatile uint16_t rx_buf_wr;
-static uint16_t rx_buf_rd;
+static volatile uint16_t rx_buf_wr;  // Next byte to be written
+static uint16_t rx_buf_rd;           // Next byte to be consumed
 
 // TX packet buffer
 static openlst_packet_t tx_buf[OPENLST_TX_BUF_COUNT];
@@ -38,7 +38,7 @@ static int tx_dma_chan;
 
 static uint16_t tx_seq;
 
-static uint16_t rx_buffer_len() {
+inline static uint16_t rx_buffer_len() {
     return ((uint16_t)(rx_buf_wr - rx_buf_rd)) % OPENLST_RX_BUF_LEN;
 }
 
@@ -102,11 +102,9 @@ void openlst_init() {
     tx_seq = get_rand_32();
 }
 
-void openlst_deinit() {
-    queue_free(&tx_buf_queue);
-}
+void openlst_deinit() { queue_free(&tx_buf_queue); }
 
-void openlst_uart_isr() {
+void __not_in_flash_func(openlst_uart_isr)() {
     while (uart_is_readable(OPENLST_UART_ID)) {
         // Access register directly to speed things up
         rx_buf[rx_buf_wr++] = UART_DR(OPENLST_UART_ID);
@@ -115,24 +113,17 @@ void openlst_uart_isr() {
 }
 
 void openlst_process() {
-    // TODO: test entire function, lots of places for off by one errors
-
     uint16_t buf_len = rx_buffer_len();
-    uint16_t start_idx = rx_buf_rd;
 
     // Loop until buffer is empty or only a partial packet remains
     while (1) {
-        uint16_t consumed;
-
         // Loop until start bytes are found or we run out of bytes
         while (1) {
-            consumed = ((uint16_t)(rx_buf_rd - start_idx)) % OPENLST_RX_BUF_LEN;
-
             uint8_t byte1 = rx_buf[rx_buf_rd];
             uint8_t byte2 = rx_buf[(rx_buf_rd + 1) % OPENLST_RX_BUF_LEN];
 
             // Less than 3 bytes left, leave them for next time
-            if (consumed >= buf_len - 3) {
+            if (buf_len < 3) {
                 return;
             }
 
@@ -143,6 +134,7 @@ void openlst_process() {
 
             rx_buf_rd++;
             rx_buf_rd %= OPENLST_RX_BUF_LEN;
+            buf_len--;
         }
 
         // At this point, we should have at least the 2 start bytes and the
@@ -157,24 +149,22 @@ void openlst_process() {
             return;
         }
 
-        // Packet starts 3 bytes after read pointer (ignoring start and length)
-        uint8_t *pkt = rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN;
-
-        // Use an intermediate buffer if the packet wraps around the end of
-        // the RX buffer.
+        // Copy packet into a new buffer to prevent overwriting rx_buf
         if ((rx_buf_rd + 3) % OPENLST_RX_BUF_LEN + pkt_len >=
             OPENLST_RX_BUF_LEN) {
+            // Handle wraparound
             int count = OPENLST_RX_BUF_LEN - (rx_buf_rd + 3);
             memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, count);
             memcpy(pkt_buf + count, rx_buf, pkt_len - count);
-
-            pkt = pkt_buf;
+        } else {
+            memcpy(pkt_buf, rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN, pkt_len);
         }
-
-        openlst_handle_packet(pkt, pkt_len);
 
         // Move read pointer to after packet
         rx_buf_rd = (rx_buf_rd + pkt_len + 3) % OPENLST_RX_BUF_LEN;
+        buf_len -= pkt_len + 3;
+
+        openlst_handle_packet(pkt_buf, pkt_len);
     }
 }
 
@@ -214,6 +204,9 @@ openlst_packet_t *openlst_get_tx_buffer() {
         // No free buffers
         return NULL;
     } else {
+        // Mark buffer as in use until packet is sent
+        tx_buf_status |= (1 << i);
+
         // Use some reasonable defaults
         tx_buf[i].hdr.hwid = 0x0000;
         tx_buf[i].hdr.system = 0x01;
@@ -239,15 +232,12 @@ static void openlst_tx_dma(int pkt_idx) {
 int openlst_tx(openlst_packet_t *pkt) {
     // Assuming GCC puts tx_buf in sequential memory with no gaps, we can
     // calculate the index of the packet from it's pointer
-    int pkt_idx = (pkt - tx_buf) / sizeof(openlst_packet_t);
+    int pkt_idx = pkt - tx_buf;
 
     if ((pkt_idx < 0) | (pkt_idx >= OPENLST_TX_BUF_COUNT)) {
         // pkt does not point to a struct within the TX buffer
         return 1;
     }
-
-    // Mark buffer as in use until packet is sent
-    tx_buf_status &= (1 << pkt_idx);
 
     // Add packet to queue
     queue_add_blocking(&tx_buf_queue, &pkt_idx);
@@ -260,7 +250,7 @@ int openlst_tx(openlst_packet_t *pkt) {
     return 0;
 }
 
-void openlst_dma_isr() {
+void __not_in_flash_func(openlst_dma_isr)() {
     // Clear request
     dma_hw->ints0 = 1 << tx_dma_chan;
 
@@ -270,11 +260,15 @@ void openlst_dma_isr() {
     queue_remove_blocking(&tx_buf_queue, &pkt);
 
     // Mark status as free
-    tx_buf_status |= ~(1 << pkt);
+    tx_buf_status &= ~(1 << pkt);
 
     // Start another transfer
     if (!queue_is_empty(&tx_buf_queue)) {
         queue_peek_blocking(&tx_buf_queue, &pkt);
         openlst_tx_dma(pkt);
     }
+}
+
+int openlst_done() {
+    return queue_get_level(&tx_buf_queue) == 0;
 }

@@ -7,8 +7,10 @@
 #include "openlst_driver.h"
 #include "scheduler.h"
 #include "telemetry.h"
+#include "updater.h"
 
 #include "hardware/gpio.h"
+#include "hardware/watchdog.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 
@@ -17,6 +19,8 @@
 #include <string.h>
 
 int main() {
+    watchdog_enable(WATCHDOG_TIMEOUT_MS, true);
+
     // First run of PRNG takes longer than normal because it has to generate a
     // seed so we run this first to get it out of the way.
     get_rand_32();
@@ -32,7 +36,19 @@ int main() {
 
     scheduler_init();
 
-    log_msg("booted");
+    log_fmt("Booted. Git hash: %s. Compiled at %s %s", GIT_HASH, __TIME__, __DATE__);
+
+    // Check if last reset was due to watchdog
+    if (watchdog_caused_reboot()) {
+        log_msg("Watchdog caused last reboot.");
+    }
+
+    // Check if update was applied
+    if (watchdog_hw->scratch[0] == UPDATER_REBOOT_MAGIC) {
+        log_msg("Update applied successfully.");
+    }
+
+    watchdog_hw->scratch[0] = 0;
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
     scheduler_add_task(openlst_process, 50 * 1000);
@@ -44,9 +60,16 @@ int main() {
     // decrease this
     scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
 
+    // Updater
+    scheduler_add_task(updater_process, 100 * 1000);
+
     command_setup();
 
     while (1) {
+        // Update watchdog every loop
+        watchdog_update();
+
+        // Run any scheduled tasks
         scheduler_run();
     }
 }

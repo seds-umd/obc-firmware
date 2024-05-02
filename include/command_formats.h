@@ -4,62 +4,81 @@
 
 #pragma once
 
+#include "config.h"
 #include "telemetry.h"
 
+#include "pico/platform.h"
+
 #include <stdint.h>
-
-// Pack all structs into bytes
-#pragma pack(1)
-
-// Maximum size of an OpenLST packet, not including start bytes or size bytes
-#define OPENLST_MAX_PAYLOAD 251
-#define OPENLST_START_0 0x22
-#define OPENLST_START_1 0x69
 
 ////////// Ground Commands //////////
 
 typedef union {
-    struct {
+    uint8_t ack;
+
+    struct __attribute__((__packed__)) {
         uint32_t pin;
         uint8_t pin_op;
     } gpio;
 
-    struct {
+    struct __attribute__((__packed__)) {
         uint32_t pin_mode;
         uint32_t pin_state;
     } gpio_state;
 
-    struct {
+    struct __attribute__((__packed__)) {
         uint8_t cmd;
 
         union {
-            struct {
+            struct __attribute__((__packed__)) {
                 uint8_t addr[3];
                 uint8_t size;
             } read;
 
-            struct {
+            struct __attribute__((__packed__)) {
                 uint8_t addr[3];
                 // Data length dictated by buffer in openlst_packet_payload_t
                 uint8_t data[1];
             } program;
 
-            struct {
+            struct __attribute__((__packed__)) {
                 uint8_t addr[3];
                 uint8_t size;
             } erase;
 
-            struct {
+            struct __attribute__((__packed__)) {
                 uint8_t data[1];
             } read_resp;
 
-            struct {
+            struct __attribute__((__packed__)) {
                 uint64_t unique_id;
             } unique_id_resp;
         };
     } flash_cmd;
 
     struct telem_struct telem;
+
+    struct __attribute__((__packed__)) {
+        uint32_t size;
+        uint32_t crc32;
+    } update_init;
+
+    struct __attribute__((__packed__)) {
+        uint16_t addr;
+        uint8_t data[UPDATER_CHUNK_SIZE];
+    } update_chunk;
+
+    struct __attribute__((__packed__)) {
+        int8_t update_status;
+        uint8_t crc_matched;
+        uint32_t crc_expected;
+        uint16_t chunks_remaining;
+        uint16_t chunk_addr[96];
+    } update_status;
+
+    struct __attribute__((__packed__)) {
+        uint32_t addr;
+    } update_read;
 } command_t;
 
 ////////// OpenLST Packets //////////
@@ -87,7 +106,7 @@ typedef enum {
     // TODO: other commands and custom commands
 } openlst_command_t;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
     uint16_t hwid;
     uint16_t seq;
     uint8_t system;
@@ -103,14 +122,14 @@ typedef union {
     // TODO
 
     // Ground commands
-    struct {
+    struct __attribute__((__packed__)) {
         uint8_t opcode;
         command_t msg;
     } gnd_cmd;
 } openlst_packet_payload_t;
 
 /// @brief OpenLST packet structure
-typedef struct {
+typedef struct __attribute__((__packed__)) {
     // Actual packet is 251 bytes long
     openlst_packet_header_t hdr;
     openlst_packet_payload_t pld;
@@ -123,7 +142,7 @@ typedef struct {
 #define PACKET_TYPE_OPENLST 1
 #define PACKET_TYPE_PIB 2
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
     int type;
     union {
         openlst_packet_t *lst_pkt;

@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Measure test run time - https://stackoverflow.com/a/76029051
+#define CPUTIME(FCALL)                             \
+    ({                                             \
+        float START = clock();                     \
+        FCALL;                                     \
+        ((float)clock() - START) / CLOCKS_PER_SEC; \
+    })
+
 // Empty setup and teardown so compiler doesn't get mad
 void setUp() {}
 
@@ -23,13 +31,15 @@ int main(void) {
         "is defined in, not main.c like the message says");
 
     // Unit tests for test infrastructure
-    RUN_TEST(test_uart);
-    RUN_TEST(test_queue);
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_uart)));
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_queue)));
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_flash)));
 
     // Unit tests for actual firmware
-    RUN_TEST(test_commands);
-    RUN_TEST(test_scheduler);
-    RUN_TEST(test_openlst);
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_commands)));
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_scheduler)));
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_openlst)));
+    printf("Took %f sec\n", CPUTIME(RUN_TEST(test_updater)));
 
     return UNITY_END();
 }

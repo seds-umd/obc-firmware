@@ -35,6 +35,9 @@ make
 ./tests
 ```
 
+Optional cmake defines (default state is none of these):
+* `-DFLOW_CONTROL=OFF` - don't use flow control on openlst interface
+
 To add a new unit test:
 
 * Write the test in a file starting with `test_` in the `test` directory (ex: `test/test_commands.c`)

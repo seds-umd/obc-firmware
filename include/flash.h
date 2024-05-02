@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 
-#define FLASH_PAGE_SIZE 256
-#define FLASH_SECTOR_SIZE 4096
+// #define FLASH_PAGE_SIZE 256
+// #define FLASH_SECTOR_SIZE 4096
 
 #define FLASH_CMD_PAGE_PROGRAM 0x02
 #define FLASH_CMD_READ 0x03

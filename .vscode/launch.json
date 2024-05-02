@@ -2,6 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Pico Debug",
+            "cwd": "${workspaceRoot}",
+            "executable": "build/application.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "gdbPath" : "gdb-multiarch",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",
+                "target/rp2040.cfg"
+            ],
+            "device": "RP2040",
+            "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
+            "openOCDLaunchCommands": ["adapter speed 3000"],
+            "postResetCommands": [
+                "break main",
+                "continue"
+            ],
+            "openOCDPreConfigLaunchCommands": [
+                "set USE_CORE 0"
+            ]
+        },
+        {
             "name": "(gdb) Native",
             "type": "cppdbg",
             "request": "launch",

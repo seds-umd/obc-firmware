@@ -7,11 +7,12 @@ import logging
 import struct
 import time
 
+import updater
 from obc_commands import ObcCmds
-from telemetry import Telemetry
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
+from telemetry import Telemetry
 
 SHELL_HEADER = """\
 OBC shell
@@ -236,6 +237,7 @@ class Obc(LstHandler):
 
         self.gpio = Gpio(self)
         self.flash = Flash(self)
+        self.updater = updater.Updater(self)
 
     def obc_cmd(self, opcode: int, data: bytes = bytes(), resp: bool = False):
         # Send command in OBC command format, returns response or sequence
@@ -273,6 +275,17 @@ class Obc(LstHandler):
 
     def power_cycle_openlst(self):
         self.obc_cmd(ObcCmds.OPENLST_PWR)
+    
+    def update_read(self, addr: int):
+        assert addr >= 0 and addr < 2**24, "Address out of bounds"
+
+        msg = bytearray()
+        msg.extend(pack_cint(addr, 4, False))
+
+        reply: Packet = self.obc_cmd(ObcCmds.UPDATE_READ, resp=True)
+
+        # Return received data minus 1 byte opcode, 2 byte address
+        return reply["data"][1+2:]
 
 
 if __name__ == "__main__":
