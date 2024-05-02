@@ -142,7 +142,16 @@ class Updater:
         self.obc.obc_cmd(ObcCmds.UPDATE_CHUNK, msg, False)
 
     def _get_status(self) -> UpdateStatus:
-        reply: Packet = self.obc.obc_cmd(ObcCmds.UPDATE_STATUS_REQ, resp=True)
+        for _ in range(3):
+            try:
+                reply: Packet = self.obc.obc_cmd(ObcCmds.UPDATE_STATUS_REQ, resp=True)
+
+                if reply != None:
+                    break
+            except TimeoutError:
+                continue
+
+            raise TimeoutError()
 
         return UpdateStatus.decode(reply["data"][1:])
 
