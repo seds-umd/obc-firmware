@@ -1,1 +1,1 @@
-openlst-sw @ git+ssh://git@github.com/seds-umd/openlst-software.git@dev
+openlst-sw @ git+ssh://git@github.com/seds-umd/openlst-software.git
