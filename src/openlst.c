@@ -4,6 +4,7 @@
 #include "command_formats.h"
 #include "config.h"
 #include "macros.h"
+#include "sha256.h"
 
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
@@ -23,6 +24,16 @@ static uint8_t rx_buf[OPENLST_RX_BUF_LEN];
 static uint8_t pkt_buf[OPENLST_MAX_PAYLOAD];
 static volatile uint16_t rx_buf_wr;  // Next byte to be written
 static uint16_t rx_buf_rd;           // Next byte to be consumed
+static const uint8_t sha256_key[32] = {
+    0x60, 0x3D, 0xEB, 0x10, 0x15, 0xCA, 0x71, 0xBE,
+    0x2B, 0x73, 0xAE, 0xF0, 0x85, 0x7D, 0x77, 0x81,
+    0x1F, 0x35, 0x2C, 0x07, 0x3B, 0x61, 0x08, 0xD7,
+    0x2D, 0x98, 0x10, 0xA3, 0x09, 0x14, 0xDF, 0xF4
+};
+
+#define HASH_SIZE 32  // 32-byte SHA-256 hash size
+
+
 
 // TX packet buffer
 static openlst_packet_t tx_buf[OPENLST_TX_BUF_COUNT];
@@ -37,6 +48,7 @@ static uint32_t tx_buf_status;
 static int tx_dma_chan;
 
 static uint16_t tx_seq;
+static SHA256_CTX global_sha_ctx;
 
 inline static uint16_t rx_buffer_len() {
     return ((uint16_t)(rx_buf_wr - rx_buf_rd)) % OPENLST_RX_BUF_LEN;
@@ -176,6 +188,22 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     pkt.lst_pkt = (openlst_packet_t *)buf;
     pkt.lst_pkt->len = len;
 
+    //Recompute the hash of the received data
+    uint8_t computed_hash[HASH_SIZE];  // Temporary buffer for the computed hash
+    SHA256_CTX ctx;
+
+    // Initialize the SHA-256 context and compute hash 
+    sha256_init(&global_sha_ctx);
+    sha256_update(&global_sha_ctx, sha256_key, sizeof(sha256_key));  // Add key
+    sha256_update(&global_sha_ctx, pkt.lst_pkt->data, pkt.lst_pkt->len);  // Add payload
+    sha256_final(&global_sha_ctx, computed_hash);  // Finalize and store in computed_hash
+
+    //Compare the computed hash with the received hash
+    if (memcmp(computed_hash, pkt.lst_pkt->pld.hash, HASH_SIZE) != 0) {
+        printf("ERROR: Hash mismatch! Packet dropped.\n");
+        return; 
+    }
+
     switch (pkt.lst_pkt->hdr.command) {
         // ASCII messages are our custom commands
         case ASCII:
@@ -212,6 +240,9 @@ openlst_packet_t *openlst_get_tx_buffer() {
         tx_buf[i].hdr.system = 0x01;
         tx_buf[i].hdr.command = ASCII;
 
+        // Initialize the SHA-256 context
+        sha256_init(&tx_buf[i].sha_ctx);
+
         return &tx_buf[i];
     }
 }
@@ -234,10 +265,15 @@ int openlst_tx(openlst_packet_t *pkt) {
     // calculate the index of the packet from it's pointer
     int pkt_idx = pkt - tx_buf;
 
-    if ((pkt_idx < 0) | (pkt_idx >= OPENLST_TX_BUF_COUNT)) {
+    if ((pkt_idx < 0) || (pkt_idx >= OPENLST_TX_BUF_COUNT)) {
         // pkt does not point to a struct within the TX buffer
         return 1;
     }
+
+    // Compute the SHA-256 hash of (key + command data)
+    sha256_update(&global_sha_ctx, sha256_key, sizeof(sha256_key));  
+    sha256_update(&global_sha_ctx, pkt->data, pkt->hdr.len);  
+    sha256_final(&global_sha_ctx, pkt->pld.hash);  
 
     // Add packet to queue
     queue_add_blocking(&tx_buf_queue, &pkt_idx);

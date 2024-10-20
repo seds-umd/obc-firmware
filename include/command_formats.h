@@ -8,7 +8,7 @@
 #include "telemetry.h"
 
 #include "pico/platform.h"
-
+#include "sha256.h"
 #include <stdint.h>
 
 ////////// Ground Commands //////////
@@ -124,6 +124,7 @@ typedef union {
     // Ground commands
     struct __attribute__((__packed__)) {
         uint8_t opcode;
+        uint8_t hash[32];
         command_t msg;
     } gnd_cmd;
 } openlst_packet_payload_t;
@@ -137,6 +138,8 @@ typedef struct __attribute__((__packed__)) {
     // 5 extra bytes for padding to 256 bytes and metadata
     uint8_t len;  // Length as sent over UART, includes header and payload
     uint8_t _padding[4];
+    // uint8_t hash[32]; // SHA256 hash of payload
+    // SHA256_CTX sha_ctx; // Pointer to SHA256 context for payload hash
 } openlst_packet_t;
 
 #define PACKET_TYPE_OPENLST 1
