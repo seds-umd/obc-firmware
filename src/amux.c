@@ -95,7 +95,6 @@ uint16_t read_and_convert(uint8_t amux_input) {
     // this block is for when reading from voltage sensors
     if (amux_input == 4 || amux_input == 8 || amux_input == 5) {  
         
-        
         return voltage_in_mv;
     }
 
@@ -108,7 +107,7 @@ uint16_t read_and_convert(uint8_t amux_input) {
     }
 
 
-    // this block is for when reading from temperature senesors
+    // this block is for when reading from temperature sensors
     if (amux_input == 2 || amux_input == 3 ||
         (amux_input <= 15 && amux_input >= 11)) {
          
@@ -125,3 +124,18 @@ uint16_t read_and_convert(uint8_t amux_input) {
 }
 
 
+uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
+      float senseRes = 1;
+      if (pinNo == 0) {
+            senseRes = 0.1;
+      } else if (pinNo == 1) {
+            senseRes = 0.25;
+      } else if (pinNo == 9) {
+            senseRes = 0.25;
+      } else if (pinNo == 10) {
+            senseRes = 0.02;
+      }
+      return outputVoltage / (100 * senseRes);
+      
+      return outputVoltage / (senseRes);
+ }
