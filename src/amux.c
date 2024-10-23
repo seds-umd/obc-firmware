@@ -35,6 +35,8 @@ void amux_init()
     gpio_set_dir(SELECT_1, true);
     gpio_set_dir(SELECT_2, true);
     gpio_set_dir(SELECT_3, true);
+
+    adc_set_temp_sensor_enabled(true);
 }
 
 void set_select(uint8_t select_number){
@@ -123,6 +125,22 @@ uint16_t read_and_convert(uint8_t amux_input) {
     return -1.0;
 }
 
+
+uint16_t readrp2040Temp(){
+    const float conversion_factor = 3.3f / (1 << 12);
+    adc_select_input(4);
+
+    uint16_t result = adc_read();
+    const float B = 3435;
+    const float R0 = 10000;
+    const float T0 = 273.15 + 25; // kelvin
+    float out = result * conversion_factor;
+    float R = out * R0 / (3.3 - out);
+
+    adc_select_input(0);
+    
+    return (1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15) * 100;
+}
 
 uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
       float senseRes = 1;
