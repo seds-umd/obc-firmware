@@ -128,18 +128,14 @@ uint16_t read_and_convert(uint8_t amux_input) {
 
 uint16_t readrp2040Temp(){
     const float conversion_factor = 3.3f / (1 << 12);
-    adc_select_input(4);
-
-    uint16_t result = adc_read();
-    const float B = 3435;
-    const float R0 = 10000;
-    const float T0 = 273.15 + 25; // kelvin
-    float out = result * conversion_factor;
-    float R = out * R0 / (3.3 - out);
-
-    adc_select_input(0);
     
-    return (1/(1.0/T0 + 1.0/B*logf(R/R0)) - 273.15) * 100;
+    adc_select_input(4);
+    uint16_t result = adc_read();
+    adc_select_input(0);
+
+    uint16_t outputVoltage = result*conversion_factor;
+
+    return 27 - ((outputVoltage - 0.706f) / 0.001721f); 
 }
 
 uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
@@ -154,6 +150,4 @@ uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
             senseRes = 0.02;
       }
       return outputVoltage / (100 * senseRes);
-      
-      return outputVoltage / (senseRes);
  }
