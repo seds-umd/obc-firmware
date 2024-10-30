@@ -1,5 +1,15 @@
 # OBC Firmware
 
+Clone and build:
+
+```bash
+git clone --recursive git@github.com:seds-umd/obc-firmware.git
+mkdir build
+cd build
+cmake ..
+make -j8
+```
+
 ## Project Structure
 
 Directories:
