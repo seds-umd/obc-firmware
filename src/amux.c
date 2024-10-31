@@ -139,15 +139,15 @@ uint16_t readrp2040Temp(){
 }
 
 uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
-      float senseRes = 1;
+      uint16_t senseRes = 1;
       if (pinNo == 0) {
-            senseRes = 0.1;
+            senseRes = 10;
       } else if (pinNo == 1) {
-            senseRes = 0.25;
+            senseRes = 25;
       } else if (pinNo == 9) {
-            senseRes = 0.25;
+            senseRes = 25;
       } else if (pinNo == 10) {
-            senseRes = 0.02;
+            senseRes = 2;
       }
-      return outputVoltage / (100 * senseRes);
+      return outputVoltage / (senseRes);
  }
