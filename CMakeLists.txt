@@ -74,6 +74,7 @@ add_executable(application
     src/scheduler.c
     src/telemetry.c
     src/updater.c
+    src/sha256.c
 
     # External source files
     external/littlefs/lfs.c

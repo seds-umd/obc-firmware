@@ -14,6 +14,7 @@
 ////////// Ground Commands //////////
 
 typedef union {
+
     uint8_t ack;
 
     struct __attribute__((__packed__)) {
@@ -123,8 +124,10 @@ typedef union {
 
     // Ground commands
     struct __attribute__((__packed__)) {
+        uint8_t hash[32];
         uint8_t opcode;
         command_t msg;
+        
     } gnd_cmd;
 } openlst_packet_payload_t;
 
@@ -133,7 +136,6 @@ typedef struct __attribute__((__packed__)) {
     // Actual packet is 251 bytes long
     openlst_packet_header_t hdr;
     openlst_packet_payload_t pld;
-
     // 5 extra bytes for padding to 256 bytes and metadata
     uint8_t len;  // Length as sent over UART, includes header and payload
     uint8_t _padding[4];
