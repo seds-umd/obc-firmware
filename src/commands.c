@@ -80,8 +80,8 @@ static int command_reboot(packet_t *pkt) {
 }
 
 static int command_gpio(packet_t *pkt) {
-    uint8_t op = pkt->lst_pkt->pld.gnd_cmd.msg.gpio.pin_op;
-    uint32_t pins = pkt->lst_pkt->pld.gnd_cmd.msg.gpio.pin;
+    uint8_t op = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.gpio.pin_op;
+    uint32_t pins = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.gpio.pin;
 
     // Functions without bitmask support
     for (int i = 0; i < 32; i++) {
@@ -124,9 +124,9 @@ static int command_gpio(packet_t *pkt) {
             reply->hdr.command = ASCII;
             reply->len = 9 + OPENLST_HEADER_SIZE;
 
-            reply->pld.gnd_cmd.opcode = 0x81;  // GPIO_STATE command
-            reply->pld.gnd_cmd.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
-            reply->pld.gnd_cmd.msg.gpio_state.pin_state = sio_hw->gpio_in;
+            reply->pld.gnd_cmd_downlink.opcode = 0x81;  // GPIO_STATE command
+            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
+            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_state = sio_hw->gpio_in;
 
             openlst_tx(reply);
             break;
@@ -139,7 +139,7 @@ static int command_gpio(packet_t *pkt) {
 }
 
 static int command_flash(packet_t *pkt) {
-    uint8_t op = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.cmd;
+    uint8_t op = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.cmd;
     uint32_t addr;
     uint8_t size;
     openlst_packet_t *reply;
@@ -149,8 +149,8 @@ static int command_flash(packet_t *pkt) {
         // Read
         case 0x00:
             addr = flash_addr_conv(
-                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.addr);
-            size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.read.size;
+                pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.read.addr);
+            size = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.read.size;
 
             // Ignore request with size too large
             // TODO: figure out actual max size
@@ -161,12 +161,12 @@ static int command_flash(packet_t *pkt) {
             reply = openlst_get_tx_buffer();
             reply->hdr.seq = pkt->lst_pkt->hdr.seq;
             reply->len = OPENLST_HEADER_SIZE + 2 + size;
-            reply->pld.gnd_cmd.opcode = 0xA1;
+            reply->pld.gnd_cmd_downlink.opcode = 0xA1;
 
             flash_wait_done();
             flash_read_bytes(
-                addr, reply->pld.gnd_cmd.msg.flash_cmd.read_resp.data, size);
-            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x00;  // READ response
+                addr, reply->pld.gnd_cmd_downlink.msg.flash_cmd.read_resp.data, size);
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd = 0x00;  // READ response
 
             openlst_tx(reply);
             break;
@@ -174,20 +174,20 @@ static int command_flash(packet_t *pkt) {
         // Program
         case 0x01:
             addr = flash_addr_conv(
-                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.addr);
+                pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.program.addr);
             size = pkt->lst_pkt->len - OPENLST_HEADER_SIZE - 5;
 
             flash_wait_done();
             flash_write_bytes(
-                addr, pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.program.data,
+                addr, pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.program.data,
                 size);
             break;
 
         // Erase
         case 0x02:
             addr = flash_addr_conv(
-                pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.addr);
-            size = pkt->lst_pkt->pld.gnd_cmd.msg.flash_cmd.erase.size;
+                pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.erase.addr);
+            size = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.erase.size;
 
             flash_wait_done();
             if (size == 0x00) {
@@ -204,11 +204,11 @@ static int command_flash(packet_t *pkt) {
             reply = openlst_get_tx_buffer();
             reply->hdr.seq = pkt->lst_pkt->hdr.seq;
             reply->len = OPENLST_HEADER_SIZE + 10;
-            reply->pld.gnd_cmd.opcode = 0xA1;
+            reply->pld.gnd_cmd_downlink.opcode = 0xA1;
 
             uint64_t id = flash_unique_id();
-            reply->pld.gnd_cmd.msg.flash_cmd.unique_id_resp.unique_id = id;
-            reply->pld.gnd_cmd.msg.flash_cmd.cmd = 0x01;  // UNIQUE_ID response
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.unique_id_resp.unique_id = id;
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd = 0x01;  // UNIQUE_ID response
 
             openlst_tx(reply);
             break;
@@ -226,9 +226,9 @@ static int command_telem(packet_t *pkt) {
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(*telem);
-    reply->pld.gnd_cmd.opcode = 0x11;
+    reply->pld.gnd_cmd_downlink.opcode = 0x11;
 
-    memcpy(&reply->pld.gnd_cmd.msg.telem, telem, sizeof(*telem));
+    memcpy(&reply->pld.gnd_cmd_downlink.msg.telem, telem, sizeof(*telem));
 
     openlst_tx(reply);
 
@@ -244,15 +244,15 @@ static int command_openlst_pwr(packet_t *pkt) {
 }
 
 static int command_update_read(packet_t *pkt) {
-    uint32_t addr = pkt->lst_pkt->pld.gnd_cmd.msg.update_read.addr;
+    uint32_t addr = pkt->lst_pkt->pld.gnd_cmd_uplink.msg.update_read.addr;
 
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
-    reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(reply->pld.gnd_cmd.msg.update_chunk);
-    reply->pld.gnd_cmd.opcode = 0x31;
+    reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(reply->pld.gnd_cmd_downlink.msg.update_chunk);
+    reply->pld.gnd_cmd_downlink.opcode = 0x31;
 
     // Copy data into packet
-    memcpy(reply->pld.gnd_cmd.msg.update_chunk.data, flash_read + addr, 128);
+    memcpy(reply->pld.gnd_cmd_downlink.msg.update_chunk.data, flash_read + addr, 128);
 
     openlst_tx(reply);
 }

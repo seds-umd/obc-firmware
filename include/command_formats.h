@@ -128,7 +128,13 @@ typedef union {
         uint8_t opcode;
         command_t msg;
         
-    } gnd_cmd;
+    } gnd_cmd_uplink;
+
+    struct __attribute__((__packed__)) {
+        uint8_t opcode;
+        command_t msg;
+        
+    } gnd_cmd_downlink;
 } openlst_packet_payload_t;
 
 /// @brief OpenLST packet structure

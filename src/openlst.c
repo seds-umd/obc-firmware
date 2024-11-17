@@ -191,8 +191,8 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     uint8_t finalHash[sizeof(pkt.lst_pkt->pld)+sizeof(pkt.lst_pkt->hdr)+16];
 
     uint8_t receivedHash[32];
-    memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd.hash), 32);
-    memset(&(pkt.lst_pkt->pld.gnd_cmd.hash), 0, 32);
+    memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 32);
+    memset(&(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 0, 32);
     
 
     uint8_t key[16] = {0x1A, 0x3F, 0x57, 0xA1, 0x8C, 0xC2, 0xD4, 0xE5, 0x07, 0x19, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F, 0x80};
@@ -202,7 +202,7 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
 
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, pkt.lst_pkt->pld.gnd_cmd.hash, sizeof(pkt.lst_pkt->pld.gnd_cmd.hash));
+    sha256_update(&ctx, pkt.lst_pkt->pld.gnd_cmd_uplink.hash, sizeof(pkt.lst_pkt->pld.gnd_cmd_uplink.hash));
     sha256_final(&ctx, finalHash);
 
     //if(memcmp(receivedHash, finalHash, 32) == 0){
