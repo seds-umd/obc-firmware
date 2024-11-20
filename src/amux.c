@@ -11,13 +11,14 @@
 #define VOLTAG_BATT 4
 #define VOLTAGE_3v3 5
 
+#include "amux.h"
+#include "logging.h"
 #include "hardware/gpio.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include <stdint.h>
-#include "logging.h"
-#include "amux.h"
+
 #include <math.h>
 
 void amux_init() 
@@ -86,7 +87,9 @@ void read_temp(int channel)
 
 uint16_t read_and_convert(uint8_t amux_input) {
      
-     const float conversion_factor = 3.3f / (1 << 12);
+    adc_select_input(0);
+
+    const float conversion_factor = 3.3f / (1 << 12);
 
     set_select(amux_input);
     //selecting which pin from amux to read from
@@ -130,8 +133,8 @@ uint16_t readrp2040Temp(){
     const float conversion_factor = 3.3f / (1 << 12);
     
     adc_select_input(4);
+    
     uint16_t result = adc_read();
-    adc_select_input(0);
 
     uint16_t outputVoltage = result*conversion_factor;
 
