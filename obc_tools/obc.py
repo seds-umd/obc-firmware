@@ -246,6 +246,7 @@ class Obc(LstHandler):
         assert opcode >= 0 and opcode < 256, "Command opcode invalid"
 
         msg = bytearray()
+       # msg.extend([0]*32)
         msg.append(opcode)
         msg.extend(data)
 

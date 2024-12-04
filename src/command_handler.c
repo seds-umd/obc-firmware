@@ -78,7 +78,7 @@ int command_process(packet_t *pkt) {
         return 1;
     }
 
-    uint8_t opcode = buf[0];
+    uint8_t opcode = buf[32]; // Fix it
     int (*handler)(packet_t *pkt) = command_table[opcode].handler;
 
     if (handler == NULL) {
