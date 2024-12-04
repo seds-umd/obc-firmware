@@ -32,14 +32,14 @@ set(PROG_HEADER "program" "header.bin" "verify" "0x10008000")
 # Flash application
 add_custom_target(install_app
     DEPENDS application
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; ${PROG_APP}\; ${PROG_HEADER} reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 1000\; ${PROG_APP}\; ${PROG_HEADER} reset exit\"
     COMMENT "Installing application"
 )
 
 # Flash bootloader
 add_custom_target(install_bl
     DEPENDS bootloader
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; ${PROG_BL} reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 1000\; ${PROG_BL} reset exit\"
     COMMENT "Installing bootloader"
 )
 
