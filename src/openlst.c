@@ -186,26 +186,28 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     packet_t pkt;
     pkt.type = PACKET_TYPE_OPENLST;
     pkt.lst_pkt = (openlst_packet_t *)buf;
-    
-    /*uint8_t message[sizeof(pkt.lst_pkt->pld)+sizeof(pkt.lst_pkt->hdr)+16];
-    uint8_t finalHash[sizeof(pkt.lst_pkt->pld)+sizeof(pkt.lst_pkt->hdr)+16];
 
+    int8_t key[16] = {26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16};
+    int hdrSz = sizeof(pkt.lst_pkt->hdr);
+    int pldSz =  len - hdrSz;
+    int keySz = sizeof(key);
+    
+    uint8_t message[pldSz+hdrSz+keySz];
+    uint8_t finalHash[32];
     uint8_t receivedHash[32];
     memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 32);
     memset(&(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 0, 32);
-    
 
-    uint8_t key[16] = {0x1A, 0x3F, 0x57, 0xA1, 0x8C, 0xC2, 0xD4, 0xE5, 0x07, 0x19, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F, 0x80};
-    memcpy(&message[0], &(pkt.lst_pkt->pld), sizeof(pkt.lst_pkt->pld));
-    memcpy(&message[0]+ sizeof(pkt.lst_pkt->pld), &(pkt.lst_pkt->hdr), sizeof(pkt.lst_pkt->hdr));
-    memcpy(&message[0] + sizeof(pkt.lst_pkt->pld)+sizeof(pkt.lst_pkt->hdr), key, sizeof(key));
+    memcpy(message, &(pkt.lst_pkt->hdr), hdrSz);
+    memcpy(message+hdrSz, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSz);
+    memcpy(message + hdrSz + pldSz, key, keySz);
 
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, pkt.lst_pkt->pld.gnd_cmd_uplink.hash, sizeof(pkt.lst_pkt->pld.gnd_cmd_uplink.hash));
-    sha256_final(&ctx, finalHash);*/
+    sha256_update(&ctx, message, pldSz+hdrSz+keySz);
+    sha256_final(&ctx, finalHash);
 
-    //if(memcmp(receivedHash, finalHash, 32) == 0){
+    if(memcmp(receivedHash, finalHash, 32) == 0){
         pkt.lst_pkt->len = len;
 
         switch (pkt.lst_pkt->hdr.command) {
@@ -226,7 +228,7 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
             default:
                 break;
         }
-    //}
+   }
 
 
 

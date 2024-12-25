@@ -15,6 +15,7 @@
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
 #include <memory.h>
+#include <stdint.h>
 #include "sha256.h"
 
 /****************************** MACROS ******************************/
@@ -155,4 +156,23 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 		hash[i + 24] = (ctx->state[6] >> (24 - i * 8)) & 0x000000ff;
 		hash[i + 28] = (ctx->state[7] >> (24 - i * 8)) & 0x000000ff;
 	}
+}
+
+void getHash(uint16_t hwid, uint16_t seq, uint8_t sys, uint8_t cmd, uint8_t opcode, uint8_t * data, int dataLen, int8_t * key, uint8_t * finalHash){
+	
+	uint8_t message[7+dataLen+16+32];
+	memcpy(message, &hwid, 2);
+	memcpy(message+2, &seq, 2);
+	memcpy(message+4, &sys, 1);
+	memcpy(message+5, &cmd, 1);
+	memset(message+6,0 , 32);
+	memcpy(message+38, &opcode, 1);
+	memcpy(message+39, data, dataLen);
+	memcpy(message + 39 + dataLen,key, 16 );
+
+	SHA256_CTX ctx;
+	sha256_init(&ctx);
+	sha256_update(&ctx, message, sizeof(message));
+	sha256_final(&ctx, finalHash);
+
 }

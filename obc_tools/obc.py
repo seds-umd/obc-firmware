@@ -6,7 +6,7 @@ import binascii
 import logging
 import struct
 import time
-
+import ctypes
 import updater
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
@@ -92,6 +92,7 @@ class Gpio:
         msg.append(0x04 if value else 0x05)
 
         self.obc.obc_cmd(ObcCmds.GPIO, msg)
+
 
     def set(self, pin: int, value: bool):
         """Set pin output.
@@ -246,12 +247,31 @@ class Obc(LstHandler):
         assert opcode >= 0 and opcode < 256, "Command opcode invalid"
 
         msg = bytearray()
-       # msg.extend([0]*32)
+        msg.extend([0]*32)
         msg.append(opcode)
         msg.extend(data)
+        
+        originalSeq = self.seq
+        clibrary = ctypes.CDLL("./obc_tools/sha256.so")
+        takeHash = clibrary.getHash
+        takeHash.argtypes = [ctypes.c_uint16, ctypes.c_uint16,ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint8,ctypes.POINTER(ctypes.c_uint8), ctypes.c_int, ctypes.POINTER(ctypes.c_uint8),ctypes.POINTER(ctypes.c_uint8)] 
+        takeHash.restype = ctypes.POINTER(ctypes.c_uint8)
 
+        pld = (ctypes.c_uint8*(len(data)))()
+        for i in range(len(data)):
+          pld[i] = data[i]
+
+        keyVal = [26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16]
+        key = (ctypes.c_uint8*16)()
+        for i in range (16):
+            key[i] = keyVal[i]
+        hash = (ctypes.c_uint8*32)()
+        clibrary.getHash(self.hwid, originalSeq,1,OpenLstCmds.ASCII,opcode,pld,len(data),key, hash);
+        for i in range(32):
+            msg[i] = hash[i]
+     
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
-
+        
         if resp:
             return self.get_packet_timeout(seqnum=seq)
         else:
