@@ -240,7 +240,8 @@ void updater_populate_status(openlst_packet_t *reply) {
         // Only record addresses if there's unwritten chunks
         // Include up to 96 chunk addresses
         uint16_t addr = last_addr_checked;
-        uint16_t *addr_list = reply->pld.gnd_cmd_downlink.msg.update_status.chunk_addr;
+        uint16_t *addr_list =
+            reply->pld.gnd_cmd_downlink.msg.update_status.chunk_addr;
 
         while (1) {
             // Done if list is full
@@ -274,9 +275,10 @@ void updater_populate_status(openlst_packet_t *reply) {
     reply->pld.gnd_cmd_downlink.msg.update_status.chunks_remaining = remaining;
 
     // Size changes depending on the number of chunk addresses included
-    reply->len = OPENLST_HEADER_SIZE + 1 +  // Header + opcode
-                 sizeof(reply->pld.gnd_cmd_downlink.msg.update_status) -  // Max size
-                 2 * (96 - addr_count);  // Number of addresses actually used
+    reply->len =
+        OPENLST_HEADER_SIZE + 1 +  // Header + opcode
+        sizeof(reply->pld.gnd_cmd_downlink.msg.update_status) -  // Max size
+        2 * (96 - addr_count);  // Number of addresses actually used
 }
 
 int updater_send_status(packet_t *pkt) {
@@ -382,13 +384,13 @@ int updater_apply_update(packet_t *pkt) {
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
     reply->hdr.command = 0x00;
     reply->pld.gnd_cmd_downlink.opcode = 0x00;
-    reply->pld.gnd_cmd_downlink.msg.ack = (ready == 1) ? 0 : 1;  // 0 is ACK, 1 is NACK
+    reply->pld.gnd_cmd_downlink.msg.ack =
+        (ready == 1) ? 0 : 1;  // 0 is ACK, 1 is NACK
     reply->len = OPENLST_HEADER_SIZE + 2;
 
     // Send ACK and wait for it to transmit
     openlst_tx(reply);
-    while (!openlst_done())
-        ;
+    while (!openlst_done());
 
     // Continue normally if update is not ready
     if (!ready) {

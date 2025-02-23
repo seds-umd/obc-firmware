@@ -19,13 +19,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-//static variable ---> only this file can see
-// volatile --> may unexpectedly change
-// receiving buffer --> continuously reading data
-// packet buffer --> holds complete buffer
+// static variable ---> only this file can see
+//  volatile --> may unexpectedly change
+//  receiving buffer --> continuously reading data
+//  packet buffer --> holds complete buffer
 
 // RX buffer
-static uint8_t rx_buf[OPENLST_RX_BUF_LEN]; // 
+static uint8_t rx_buf[OPENLST_RX_BUF_LEN];  //
 static uint8_t pkt_buf[OPENLST_MAX_PAYLOAD];
 static volatile uint16_t rx_buf_wr;  // Next byte to be written
 static uint16_t rx_buf_rd;           // Next byte to be consumed
@@ -49,23 +49,34 @@ inline static uint16_t rx_buffer_len() {
 }
 
 void openlst_init() {
-    uart_init(OPENLST_UART_ID, OPENLST_UART_BAUD); // Initialized the baud rate for UART communicatioj
+    uart_init(
+        OPENLST_UART_ID,
+        OPENLST_UART_BAUD);  // Initialized the baud rate for UART communicatioj
 
     // Configure pins
-    gpio_set_function(OPENLST_UART_TX, GPIO_FUNC_UART); 
+    gpio_set_function(OPENLST_UART_TX, GPIO_FUNC_UART);
     gpio_set_function(OPENLST_UART_RX, GPIO_FUNC_UART);
-    gpio_set_function(OPENLST_UART_CTS, GPIO_FUNC_UART); // CTS --> clear to send, receiver indicates they are ready to receive data
-    gpio_set_function(OPENLST_UART_RTS, GPIO_FUNC_UART); // RTS -->  ready to send, transmitter indicates they want to send data
+    gpio_set_function(
+        OPENLST_UART_CTS,
+        GPIO_FUNC_UART);  // CTS --> clear to send, receiver indicates they are
+                          // ready to receive data
+    gpio_set_function(OPENLST_UART_RTS,
+                      GPIO_FUNC_UART);  // RTS -->  ready to send, transmitter
+                                        // indicates they want to send data
 
     // Initialize RX buffer
-    rx_buf_wr = 0; // data is being put into the receiving buffer while data is being read from the receiving buffer
+    rx_buf_wr = 0;  // data is being put into the receiving buffer while data is
+                    // being read from the receiving buffer
     rx_buf_rd = 0;
 
     // Configure UART settings
-    uart_set_hw_flow(OPENLST_UART_ID, OPENLST_FLOW, OPENLST_FLOW); // sets hardware contorl flow
-    uart_set_format(OPENLST_UART_ID, 8, 1, UART_PARITY_NONE); // UART format: 8 data bits, 1 stop bit, and no parity
-    uart_set_fifo_enabled(OPENLST_UART_ID, true); // enables FIFO (first in, first out)
-
+    uart_set_hw_flow(OPENLST_UART_ID, OPENLST_FLOW,
+                     OPENLST_FLOW);  // sets hardware contorl flow
+    uart_set_format(OPENLST_UART_ID, 8, 1,
+                    UART_PARITY_NONE);  // UART format: 8 data bits, 1 stop bit,
+                                        // and no parity
+    uart_set_fifo_enabled(OPENLST_UART_ID,
+                          true);  // enables FIFO (first in, first out)
 
     // Configure interrupt
     irq_set_exclusive_handler(OPENLST_UART_IRQ, openlst_uart_isr);
@@ -109,7 +120,9 @@ void openlst_init() {
     tx_seq = get_rand_32();
 }
 
-void openlst_deinit() { queue_free(&tx_buf_queue); } //clears the transmission buffer queue
+void openlst_deinit() {
+    queue_free(&tx_buf_queue);
+}  // clears the transmission buffer queue
 
 void __not_in_flash_func(openlst_uart_isr)() {
     while (uart_is_readable(OPENLST_UART_ID)) {
@@ -119,8 +132,8 @@ void __not_in_flash_func(openlst_uart_isr)() {
     }
 }
 
-
-//This function transfer data from the receiving buffer to the buffer responsible for the handling
+// This function transfer data from the receiving buffer to the buffer
+// responsible for the handling
 void openlst_process() {
     uint16_t buf_len = rx_buffer_len();
 
@@ -167,7 +180,8 @@ void openlst_process() {
             memcpy(pkt_buf, rx_buf + rx_buf_rd + 3, count);
             memcpy(pkt_buf + count, rx_buf, pkt_len - count);
         } else {
-            memcpy(pkt_buf, rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN, pkt_len);
+            memcpy(pkt_buf, rx_buf + (rx_buf_rd + 3) % OPENLST_RX_BUF_LEN,
+                   pkt_len);
         }
 
         // Move read pointer to after packet
@@ -179,35 +193,35 @@ void openlst_process() {
 }
 
 void openlst_handle_packet(uint8_t *buf, uint8_t len) {
-
-    //decrypt
-    // Take a packet and process it based on the command in the header
+    // decrypt
+    //  Take a packet and process it based on the command in the header
 
     packet_t pkt;
     pkt.type = PACKET_TYPE_OPENLST;
     pkt.lst_pkt = (openlst_packet_t *)buf;
 
-    int8_t key[16] = {26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16};
+    int8_t key[16] = {26, 64, 87, 176, 131, 194, 245, 7,
+                      25, 28, 55, 95,  112, 128, 15,  16};
     int hdrSz = sizeof(pkt.lst_pkt->hdr);
-    int pldSz =  len - hdrSz;
+    int pldSz = len - hdrSz;
     int keySz = sizeof(key);
-    
-    uint8_t message[pldSz+hdrSz+keySz];
+
+    uint8_t message[pldSz + hdrSz + keySz];
     uint8_t finalHash[32];
     uint8_t receivedHash[32];
     memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 32);
     memset(&(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 0, 32);
 
     memcpy(message, &(pkt.lst_pkt->hdr), hdrSz);
-    memcpy(message+hdrSz, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSz);
+    memcpy(message + hdrSz, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSz);
     memcpy(message + hdrSz + pldSz, key, keySz);
 
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, message, pldSz+hdrSz+keySz);
+    sha256_update(&ctx, message, pldSz + hdrSz + keySz);
     sha256_final(&ctx, finalHash);
 
-    if(memcmp(receivedHash, finalHash, 32) == 0){
+    if (memcmp(receivedHash, finalHash, 32) == 0) {
         pkt.lst_pkt->len = len;
 
         switch (pkt.lst_pkt->hdr.command) {
@@ -228,48 +242,49 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
             default:
                 break;
         }
-   }
-
-
-
-
-    
+    }
 }
-
-
 
 openlst_packet_t *openlst_get_tx_buffer() {
     // Return first free buffer
     int i = __builtin_ctz(~tx_buf_status);
-    /*This line uses the __builtin_ctz function, which counts the number of trailing zeros in the binary representation of the value.
-The expression ~tx_buf_status inverts the bitmask that indicates which transmission buffers are in use.
-The result is the index i of the first free buffer. If all buffers are in use, i would equal OPENLST_TX_BUF_COUNT.*/
+    /*This line uses the __builtin_ctz function, which counts the number of
+trailing zeros in the binary representation of the value. The expression
+~tx_buf_status inverts the bitmask that indicates which transmission buffers are
+in use. The result is the index i of the first free buffer. If all buffers are
+in use, i would equal OPENLST_TX_BUF_COUNT.*/
 
     if (i >= OPENLST_TX_BUF_COUNT) {
         // No free buffers
         return NULL;
-    /*This check ensures that there is at least one free buffer available. If i is greater than or equal to OPENLST_TX_BUF_COUNT, it means no buffers are free, and the function returns NULL.*/
+        /*This check ensures that there is at least one free buffer available.
+         * If i is greater than or equal to OPENLST_TX_BUF_COUNT, it means no
+         * buffers are free, and the function returns NULL.*/
     } else {
         // Mark buffer as in use until packet is sent
         tx_buf_status |= (1 << i);
-        /*If a free buffer is found, this line marks it as "in use" by setting the corresponding bit in tx_buf_status. This prevents the same buffer from being used for another transmission until it is released.*/
+        /*If a free buffer is found, this line marks it as "in use" by setting
+         * the corresponding bit in tx_buf_status. This prevents the same buffer
+         * from being used for another transmission until it is released.*/
 
         // Use some reasonable defaults
         tx_buf[i].hdr.hwid = 0x0000;
         tx_buf[i].hdr.system = 0x01;
         tx_buf[i].hdr.command = ASCII;
-        /*Here, the function initializes some fields of the packet header in the selected buffer (tx_buf[i]) with default values. This includes:
-hwid (hardware ID) set to 0x0000
-system set to 0x01
-command set to ASCII
+        /*Here, the function initializes some fields of the packet header in the
+selected buffer (tx_buf[i]) with default values. This includes: hwid (hardware
+ID) set to 0x0000 system set to 0x01 command set to ASCII
 */
 
         return &tx_buf[i];
-        /*Finally, the function returns a pointer to the allocated and initialized transmission buffer. The caller can then fill this buffer with data to be transmitted.*/
+        /*Finally, the function returns a pointer to the allocated and
+         * initialized transmission buffer. The caller can then fill this buffer
+         * with data to be transmitted.*/
     }
 }
 
-//gives a sequence number to each packet, returns the sequence numebr and increments it for next call
+// gives a sequence number to each packet, returns the sequence numebr and
+// increments it for next call
 uint16_t openlst_get_seq() { return tx_seq++; }
 
 static void openlst_tx_dma(int pkt_idx) {
@@ -283,32 +298,38 @@ static void openlst_tx_dma(int pkt_idx) {
     dma_channel_set_read_addr(tx_dma_chan, &tx_buf[pkt_idx], true);
 }
 
-/*The openlst_tx(openlst_packet_t *pkt) function is responsible for queuing a packet for transmission and initiating the transfer if the DMA channel is available. Here's a breakdown of how this function works:*/
+/*The openlst_tx(openlst_packet_t *pkt) function is responsible for queuing a
+ * packet for transmission and initiating the transfer if the DMA channel is
+ * available. Here's a breakdown of how this function works:*/
 int openlst_tx(openlst_packet_t *pkt) {
     // Assuming GCC puts tx_buf in sequential memory with no gaps, we can
     // calculate the index of the packet from it's pointer
     int pkt_idx = pkt - tx_buf;
-    /*This line calculates the index of the packet in the tx_buf array by subtracting the base address of the tx_buf from the address of the pkt. This works under the assumption that tx_buf is laid out in contiguous memory with no gaps.*/
+    /*This line calculates the index of the packet in the tx_buf array by
+     * subtracting the base address of the tx_buf from the address of the pkt.
+     * This works under the assumption that tx_buf is laid out in contiguous
+     * memory with no gaps.*/
 
-
-    /*This check ensures that the calculated index (pkt_idx) is valid (i.e., it falls within the range of available buffers in tx_buf). If it is invalid, the function returns 1, indicating an error.*/
+    /*This check ensures that the calculated index (pkt_idx) is valid (i.e., it
+     * falls within the range of available buffers in tx_buf). If it is invalid,
+     * the function returns 1, indicating an error.*/
     if ((pkt_idx < 0) | (pkt_idx >= OPENLST_TX_BUF_COUNT)) {
         // pkt does not point to a struct within the TX buffer
         return 1;
     }
-    
-    /*This line adds the index of the packet to the transmission queue (tx_buf_queue). The function is blocking, meaning it will wait if the queue is full until a space becomes available.*/
+
+    /*This line adds the index of the packet to the transmission queue
+     * (tx_buf_queue). The function is blocking, meaning it will wait if the
+     * queue is full until a space becomes available.*/
     // Add packet to queue
 
-
-    
-    
-    
-    
     queue_add_blocking(&tx_buf_queue, &pkt_idx);
 
-    /*Here, the function checks if the DMA channel is currently busy. If it is not, it calls openlst_tx_dma(pkt_idx) to initiate the transmission of the packet. This starts the actual process of sending the packet data over UART.
-*/
+    /*Here, the function checks if the DMA channel is currently busy. If it is
+     * not, it calls openlst_tx_dma(pkt_idx) to initiate the transmission of the
+     * packet. This starts the actual process of sending the packet data over
+     * UART.
+     */
     // Start transfer if DMA is currently idle
     if (!dma_channel_is_busy(tx_dma_chan)) {
         openlst_tx_dma(pkt_idx);
@@ -336,6 +357,4 @@ void __not_in_flash_func(openlst_dma_isr)() {
     }
 }
 
-int openlst_done() {
-    return queue_get_level(&tx_buf_queue) == 0;
-}
+int openlst_done() { return queue_get_level(&tx_buf_queue) == 0; }

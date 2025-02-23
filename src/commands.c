@@ -125,8 +125,10 @@ static int command_gpio(packet_t *pkt) {
             reply->len = 9 + OPENLST_HEADER_SIZE;
 
             reply->pld.gnd_cmd_downlink.opcode = 0x81;  // GPIO_STATE command
-            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_mode = sio_hw->gpio_oe;
-            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_state = sio_hw->gpio_in;
+            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_mode =
+                sio_hw->gpio_oe;
+            reply->pld.gnd_cmd_downlink.msg.gpio_state.pin_state =
+                sio_hw->gpio_in;
 
             openlst_tx(reply);
             break;
@@ -165,8 +167,10 @@ static int command_flash(packet_t *pkt) {
 
             flash_wait_done();
             flash_read_bytes(
-                addr, reply->pld.gnd_cmd_downlink.msg.flash_cmd.read_resp.data, size);
-            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd = 0x00;  // READ response
+                addr, reply->pld.gnd_cmd_downlink.msg.flash_cmd.read_resp.data,
+                size);
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd =
+                0x00;  // READ response
 
             openlst_tx(reply);
             break;
@@ -179,7 +183,8 @@ static int command_flash(packet_t *pkt) {
 
             flash_wait_done();
             flash_write_bytes(
-                addr, pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.program.data,
+                addr,
+                pkt->lst_pkt->pld.gnd_cmd_uplink.msg.flash_cmd.program.data,
                 size);
             break;
 
@@ -207,8 +212,10 @@ static int command_flash(packet_t *pkt) {
             reply->pld.gnd_cmd_downlink.opcode = 0xA1;
 
             uint64_t id = flash_unique_id();
-            reply->pld.gnd_cmd_downlink.msg.flash_cmd.unique_id_resp.unique_id = id;
-            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd = 0x01;  // UNIQUE_ID response
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.unique_id_resp.unique_id =
+                id;
+            reply->pld.gnd_cmd_downlink.msg.flash_cmd.cmd =
+                0x01;  // UNIQUE_ID response
 
             openlst_tx(reply);
             break;
@@ -248,11 +255,13 @@ static int command_update_read(packet_t *pkt) {
 
     openlst_packet_t *reply = openlst_get_tx_buffer();
     reply->hdr.seq = pkt->lst_pkt->hdr.seq;
-    reply->len = OPENLST_HEADER_SIZE + 1 + sizeof(reply->pld.gnd_cmd_downlink.msg.update_chunk);
+    reply->len = OPENLST_HEADER_SIZE + 1 +
+                 sizeof(reply->pld.gnd_cmd_downlink.msg.update_chunk);
     reply->pld.gnd_cmd_downlink.opcode = 0x31;
 
     // Copy data into packet
-    memcpy(reply->pld.gnd_cmd_downlink.msg.update_chunk.data, flash_read + addr, 128);
+    memcpy(reply->pld.gnd_cmd_downlink.msg.update_chunk.data, flash_read + addr,
+           128);
 
     openlst_tx(reply);
 }

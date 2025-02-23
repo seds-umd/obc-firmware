@@ -2,5 +2,5 @@
 BasedOnStyle: Google
 IndentWidth: '4'
 SortIncludes: Never
-
+MaxEmptyLinesToKeep: 1
 ...

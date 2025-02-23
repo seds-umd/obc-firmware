@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import annotations
-
+import hashlib
 import binascii
 import logging
 import struct
@@ -246,30 +246,29 @@ class Obc(LstHandler):
 
         assert opcode >= 0 and opcode < 256, "Command opcode invalid"
 
+        originalSeq = self.seq
         msg = bytearray()
         msg.extend([0]*32)
         msg.append(opcode)
         msg.extend(data)
         
-        originalSeq = self.seq
-        clibrary = ctypes.CDLL("./obc_tools/sha256.so")
-        takeHash = clibrary.getHash
-        takeHash.argtypes = [ctypes.c_uint16, ctypes.c_uint16,ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint8,ctypes.POINTER(ctypes.c_uint8), ctypes.c_int, ctypes.POINTER(ctypes.c_uint8),ctypes.POINTER(ctypes.c_uint8)] 
-        takeHash.restype = ctypes.POINTER(ctypes.c_uint8)
-
-        pld = (ctypes.c_uint8*(len(data)))()
-        for i in range(len(data)):
-          pld[i] = data[i]
-
+        sys = 1
+        zero = 0
         keyVal = [26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16]
-        key = (ctypes.c_uint8*16)()
-        for i in range (16):
-            key[i] = keyVal[i]
-        hash = (ctypes.c_uint8*32)()
-        clibrary.getHash(self.hwid, originalSeq,1,OpenLstCmds.ASCII,opcode,pld,len(data),key, hash);
+        sha256 = hashlib.sha256();
+        sha256.update((self.hwid).to_bytes(2,'little'))
+        sha256.update((originalSeq).to_bytes(2,'little'))
+        sha256.update(sys.to_bytes(1,'little'))
+        sha256.update((OpenLstCmds.ASCII).to_bytes(1, 'little'))
+        sha256.update(zero.to_bytes(32,'little'))
+        sha256.update(opcode.to_bytes(1,'little'))
+        sha256.update(bytes(data))
+        sha256.update(bytes(keyVal))
+        hash2 = sha256.digest()
+
         for i in range(32):
-            msg[i] = hash[i]
-     
+            msg[i] = hash2[i]
+
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
         
         if resp:

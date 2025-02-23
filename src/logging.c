@@ -8,7 +8,8 @@
 #include <string.h>
 
 void log_msg(const char *msg) {
-    openlst_packet_t *pkt = openlst_get_tx_buffer();;
+    openlst_packet_t *pkt = openlst_get_tx_buffer();
+    ;
 
     // Drop log message rather than blocking forever
     if (pkt == NULL) {
