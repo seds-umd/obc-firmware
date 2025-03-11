@@ -6,13 +6,14 @@ import binascii
 import logging
 import struct
 import time
-import ctypes
 import updater
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
 from telemetry import Telemetry
+
+KEY = (26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16)
 
 SHELL_HEADER = """\
 OBC shell
@@ -254,23 +255,20 @@ class Obc(LstHandler):
         
         sys = 1
         zero = 0
-        keyVal = [26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16]
-        sha256 = hashlib.sha256();
-        sha256.update((self.hwid).to_bytes(2,'little'))
-        sha256.update((originalSeq).to_bytes(2,'little'))
+        sha256 = hashlib.sha256()
+        sha256.update(self.hwid.to_bytes(2,'little'))
+        sha256.update(originalSeq.to_bytes(2,'little'))
         sha256.update(sys.to_bytes(1,'little'))
-        sha256.update((OpenLstCmds.ASCII).to_bytes(1, 'little'))
+        sha256.update(OpenLstCmds.ASCII.to_bytes(1, 'little'))
         sha256.update(zero.to_bytes(32,'little'))
         sha256.update(opcode.to_bytes(1,'little'))
         sha256.update(bytes(data))
-        sha256.update(bytes(keyVal))
-        hash2 = sha256.digest()
+        sha256.update(bytes(KEY))
+        hash = sha256.digest()
 
-        for i in range(32):
-            msg[i] = hash2[i]
+        msg[:32]=hash
 
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
-        
         if resp:
             return self.get_packet_timeout(seqnum=seq)
         else:

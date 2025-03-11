@@ -25,7 +25,7 @@
 //  packet buffer --> holds complete buffer
 
 // RX buffer
-static uint8_t rx_buf[OPENLST_RX_BUF_LEN];  //
+static uint8_t rx_buf[OPENLST_RX_BUF_LEN];
 static uint8_t pkt_buf[OPENLST_MAX_PAYLOAD];
 static volatile uint16_t rx_buf_wr;  // Next byte to be written
 static uint16_t rx_buf_rd;           // Next byte to be consumed
@@ -47,6 +47,9 @@ static uint16_t tx_seq;
 inline static uint16_t rx_buffer_len() {
     return ((uint16_t)(rx_buf_wr - rx_buf_rd)) % OPENLST_RX_BUF_LEN;
 }
+
+const int8_t key[16] = {26, 64, 87, 176, 131, 194, 245, 7,
+    25, 28, 55, 95,  112, 128, 15,  16};
 
 void openlst_init() {
     uart_init(
@@ -200,26 +203,29 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     pkt.type = PACKET_TYPE_OPENLST;
     pkt.lst_pkt = (openlst_packet_t *)buf;
 
-    int8_t key[16] = {26, 64, 87, 176, 131, 194, 245, 7,
-                      25, 28, 55, 95,  112, 128, 15,  16};
-    int hdrSz = sizeof(pkt.lst_pkt->hdr);
-    int pldSz = len - hdrSz;
-    int keySz = sizeof(key);
+    
+    int hdrSize = sizeof(pkt.lst_pkt->hdr);
+    int pldSize = len - hdrSize;
+    int keySize = sizeof(key);
 
-    uint8_t message[pldSz + hdrSz + keySz];
+    uint8_t message[pldSize + hdrSize + keySize];
     uint8_t finalHash[32];
     uint8_t receivedHash[32];
     memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 32);
     memset(&(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 0, 32);
 
-    memcpy(message, &(pkt.lst_pkt->hdr), hdrSz);
-    memcpy(message + hdrSz, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSz);
-    memcpy(message + hdrSz + pldSz, key, keySz);
+    memcpy(message, &(pkt.lst_pkt->hdr), hdrSize);
+    memcpy(message + hdrSize, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSize);
+    memcpy(message + hdrSize + pldSize, key, keySize);
 
+    
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, message, pldSz + hdrSz + keySz);
+    
+    sha256_update(&ctx, message, pldSize + hdrSize + keySize);
+    
     sha256_final(&ctx, finalHash);
+    
 
     if (memcmp(receivedHash, finalHash, 32) == 0) {
         pkt.lst_pkt->len = len;
