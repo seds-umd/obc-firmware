@@ -15,9 +15,13 @@ void telem_update() {
     telem.v_mb_batt_mv = read_and_convert(4);
     telem.v_mb_3v3_mv = read_and_convert(5);
     telem.v_mb_4v2_mv = read_and_convert(8);
+    //Listed as OBC temperature on the schematics
+    telem.v_gps0_mv = read_and_convert(13);
+    telem.v_gps1_mv = read_and_convert(14);
+    telem.v_gps2_mv = read_and_convert(15);
 
-    telem.i_mb_3v3_gps_ma = read_and_convert(0);
-    telem.i_mb_3v3_obc_ma = read_and_convert(1);
+    telem.i_mb_3v3_gps_ma = read_and_convert(1);
+    telem.i_mb_3v3_obc_ma = read_and_convert(0);
     telem.i_mb_batt_ma = read_and_convert(6);
     telem.i_mb_3v3_lst_ma = read_and_convert(9);
     telem.i_mb_4v2_lst_ma = read_and_convert(10);
@@ -29,11 +33,14 @@ void telem_update() {
 
     telem.t_rp2040_cc = readrp2040Temp();
 
+
     // Update OpenLST telemetry
-    
+    //Requires command and implementation in openlst firmaware 
 
     //Boot Count
     //Requires read to filesystem
+    
+
     
 }
 

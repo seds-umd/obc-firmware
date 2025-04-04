@@ -98,7 +98,7 @@ uint16_t read_and_convert(uint8_t amux_input) {
     uint16_t voltage_in_mv = ((float)result * conversion_factor * 1000);
 
     // this block is for when reading from voltage sensors
-    if (amux_input == 4 || amux_input == 8 || amux_input == 5) {  
+    if (amux_input == 4 || amux_input == 8 || amux_input == 5 || (amux_input >= 13 && amux_input <= 15)) {  
         
         return voltage_in_mv;
     }
@@ -114,7 +114,7 @@ uint16_t read_and_convert(uint8_t amux_input) {
 
     // this block is for when reading from temperature sensors
     if (amux_input == 2 || amux_input == 3 ||
-        (amux_input <= 15 && amux_input >= 11)) {
+        (amux_input <= 12 && amux_input >= 11)) {
          
         const float B = 3435;
         const float R0 = 10000;

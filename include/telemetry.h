@@ -10,6 +10,11 @@ struct telem_struct {
     uint16_t v_mb_3v3_mv; 
     uint16_t v_lst_4v2_mv;
     uint16_t v_lst_3v3_mv;
+    //OBC Temps in the schematic
+    uint16_t v_gps0_mv;
+    uint16_t v_gps1_mv;
+    uint16_t v_gps2_mv;
+
     uint16_t i_mb_3v3_obc_ma; 
     uint16_t i_mb_3v3_gps_ma; 
     uint16_t i_mb_3v3_lst_ma;
