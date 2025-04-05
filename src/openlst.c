@@ -203,12 +203,11 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     pkt.type = PACKET_TYPE_OPENLST;
     pkt.lst_pkt = (openlst_packet_t *)buf;
 
-    
-    int hdrSize = sizeof(pkt.lst_pkt->hdr);
-    int pldSize = len - hdrSize;
-    int keySize = sizeof(key);
+    int hdrSize = 6;
+    int pldSize = 200;
+    int keySize = sizeof(key)
+    uint8_t message[hdrSize + pldSize + keySize +1] = {0};
 
-    uint8_t message[pldSize + hdrSize + keySize];
     uint8_t finalHash[32];
     uint8_t receivedHash[32];
     memcpy(&receivedHash, &(pkt.lst_pkt->pld.gnd_cmd_uplink.hash), 32);
@@ -217,7 +216,6 @@ void openlst_handle_packet(uint8_t *buf, uint8_t len) {
     memcpy(message, &(pkt.lst_pkt->hdr), hdrSize);
     memcpy(message + hdrSize, &(pkt.lst_pkt->pld.gnd_cmd_uplink), pldSize);
     memcpy(message + hdrSize + pldSize, key, keySize);
-
     
     SHA256_CTX ctx;
     sha256_init(&ctx);

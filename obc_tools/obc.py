@@ -255,6 +255,7 @@ class Obc(LstHandler):
         
         sys = 1
         zero = 0
+        end_zeroes = 201-2-2-1-1-32-1-len(data)-len(KEY)
         sha256 = hashlib.sha256()
         sha256.update(self.hwid.to_bytes(2,'little'))
         sha256.update(originalSeq.to_bytes(2,'little'))
@@ -264,6 +265,7 @@ class Obc(LstHandler):
         sha256.update(opcode.to_bytes(1,'little'))
         sha256.update(bytes(data))
         sha256.update(bytes(KEY))
+        sha256.update(zero.to_bytes(end_zeroes,'little'))
         hash = sha256.digest()
 
         msg[:32]=hash
