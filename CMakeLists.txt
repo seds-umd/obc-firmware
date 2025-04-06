@@ -24,6 +24,9 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/external/littlefs
 )
 
+# Don't generate UF2 file to avoid picotool bug
+set(PICO_NO_UF2 1)
+
 # Programming commands for openocd
 set(PROG_APP "program" "application.elf" "verify")
 set(PROG_BL "program" "bootloader.elf" "verify")
