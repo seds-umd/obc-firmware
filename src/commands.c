@@ -56,13 +56,13 @@ static int command_deploy_antenna(packet_t *pkt) {
     UNUSED(pkt); 
 
     gpio_init(ANTENNA_DEPLOY_PIN);
+    gpio_init(DEPLOYMENT_SWITCH);
     gpio_set_dir(ANTENNA_DEPLOY_PIN, GPIO_OUT);
-
-    gpio_get(DEPLOYMENT_SWITCH, GPIO_OUT);
+    gpio_set_dir(DEPLOYMENT_SWITCH, GPIO_IN);
     
-    int is_high = gpio_get_level(DEPLOYMENT_SWITCH);
+    int is_high = gpio_get(DEPLOYMENT_SWITCH);
 
-    if (!is_high) {
+    if (is_high) {
         return 1;
     }
 
