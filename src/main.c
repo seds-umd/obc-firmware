@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
+uint16_t seq;
+
 int main() {
     watchdog_enable(WATCHDOG_TIMEOUT_MS, true);
 
@@ -35,6 +37,7 @@ int main() {
     openlst_init();
 
     scheduler_init();
+    seq = get_rand_32();
 
     log_fmt("Booted. Git hash: %s. Compiled at %s %s", GIT_HASH, __TIME__, __DATE__);
 
@@ -62,8 +65,10 @@ int main() {
 
     // Updater
     scheduler_add_task(updater_process, 100 * 1000);
-
+    scheduler_add_task(telemetry_beacon, 5*1000*1000 );
+    
     command_setup();
+    
 
     while (1) {
         // Update watchdog every loop
@@ -72,4 +77,11 @@ int main() {
         // Run any scheduled tasks
         scheduler_run();
     }
+}
+
+void telemetry_beacon(){  
+    openlst_packet_t *telem_message = openlst_get_tx_buffer();
+    reply->hdr.seq = seq;
+    seq=seq+1;
+    command_telem(telem_message);
 }
