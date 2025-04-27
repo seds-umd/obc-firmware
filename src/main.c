@@ -66,7 +66,7 @@ int main() {
     // Updater
     scheduler_add_task(updater_process, 100 * 1000);
     scheduler_add_task(telemetry_beacon, 5*1000*1000 );
-    
+
     command_setup();
     
 
@@ -80,8 +80,8 @@ int main() {
 }
 
 void telemetry_beacon(){  
-    openlst_packet_t *telem_message = openlst_get_tx_buffer();
-    reply->hdr.seq = seq;
+    packet_t temp_pkt;
+    temp_pkt->lst_pkt->hdr.seq = seq;
     seq=seq+1;
-    command_telem(telem_message);
+    command_telem(temp_pkt);
 }
