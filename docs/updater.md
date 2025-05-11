@@ -116,15 +116,15 @@ The bootloader is intended to be as simple as possible. It should not use DMA, i
 ### Boot Process
 
 1. Don't boot if any of the conditions occur:
-  1. Application header valid byte isn't valid
-  2. Application CRC doesn't match
-  3. Watchdog scratch matches bootloader magic
+   * Application header valid byte isn't valid
+   * Application CRC doesn't match
+   * Watchdog scratch matches bootloader magic
 2. If booting, wait for 1s then boot
-  1. If ping command received, set timeout to 5s and reset after each command received
+   * If ping command received, set timeout to 5s and reset after each command received
 3. While idle, wait for and process commands
 4. When ready to boot:
-   1. Set VTOR to application slot location
-   2. Jump to reset vector from VTOR
+   * Set VTOR to application slot location
+   * Jump to reset vector from VTOR
 
 #### Recovery
 
@@ -136,11 +136,11 @@ If an application image needs to be written by the PIB:
 4. PIB sends BL_HEADER command to write application header with size and CRC
 5. PIB sends BL_WRITE commands to write image
 6. PIB gets status using BL_STATUS_REQ
-   1. If CRC doesn't match, attempt writing entire image again
+   * If CRC doesn't match, attempt writing entire image again
 
 ### Commands
 
-Reuses the [OpenLST command protocol](https://github.com/seds-umd/openlst-software/tree/dev?tab=readme-ov-file#uart-protocol). HWID and system commands are ignored. Sequence number is respected, so replies to command should use the same sequence number and non-reply messages should start from a random sequence number and increment after each non-reply message.
+Reuses the [OpenLST command protocol](https://github.com/seds-umd/openlst-software/tree/master?tab=readme-ov-file#uart-protocol). HWID and system commands are ignored. Sequence number is respected, so replies to command should use the same sequence number and non-reply messages should start from a random sequence number and increment after each non-reply message.
 
 Commands are also similar to the OpenLST bootloader. If no message fields are describes, the message must be empty.
 
