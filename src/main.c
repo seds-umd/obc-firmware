@@ -18,7 +18,21 @@
 #include <stdio.h>
 #include <string.h>
 
+void blinkLed(){
+    static int led = 0;
+    gpio_put(PICO_DEFAULT_LED_PIN, led);
+    if( led ==1 ){
+        led =0;
+    }
+    else{
+        led = 1;
+    }
+
+}
+
 int main() {
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     watchdog_enable(WATCHDOG_TIMEOUT_MS, true);
 
     // First run of PRNG takes longer than normal because it has to generate a
@@ -55,6 +69,7 @@ int main() {
 
     // Update telemetry every second
     scheduler_add_task(telem_update, 1 * 1000 * 1000);
+    scheduler_add_task(blinkLed, 1 * 1000 * 1000);
 
     // Set to 1s for now, if this needs to do anything more complicated we can
     // decrease this

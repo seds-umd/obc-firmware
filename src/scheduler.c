@@ -67,9 +67,9 @@ int scheduler_run() {
 
         // Run if period has elapsed
         if (absolute_time_diff_us(next, now) >= 0) {
-            gpio_put(DEBUG_PIN, true);
+            //gpio_put(DEBUG_PIN, true);
             task_table[i].task();
-            gpio_put(DEBUG_PIN, false);
+            //gpio_put(DEBUG_PIN, false);
 
             // TODO: use next or now here? How do we want to handle things
             // when tasks can't be run fast enough?

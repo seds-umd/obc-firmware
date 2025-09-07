@@ -1,18 +1,19 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import annotations
-
+import hashlib
 import binascii
 import logging
 import struct
 import time
-
 import updater
 from obc_commands import ObcCmds
 from openlst_tools.commands import OpenLstCmds, MAX_DATA_LEN
 from openlst_tools.handler import LstHandler, Packet
 from openlst_tools.utils import unpack_cint, pack_cint
 from telemetry import Telemetry
+
+KEY = (26, 64, 87, 176, 131,194, 245, 7, 25, 28, 55, 95, 112, 128, 15, 16)
 
 SHELL_HEADER = """\
 OBC shell
@@ -92,6 +93,7 @@ class Gpio:
         msg.append(0x04 if value else 0x05)
 
         self.obc.obc_cmd(ObcCmds.GPIO, msg)
+
 
     def set(self, pin: int, value: bool):
         """Set pin output.
@@ -245,12 +247,30 @@ class Obc(LstHandler):
 
         assert opcode >= 0 and opcode < 256, "Command opcode invalid"
 
+        originalSeq = self.seq
         msg = bytearray()
+        msg.extend([0]*32)
         msg.append(opcode)
         msg.extend(data)
+        
+        sys = 1
+        zero = 0
+        end_zeroes = 201-2-2-1-1-32-1-len(data)-len(KEY)
+        sha256 = hashlib.sha256()
+        sha256.update(self.hwid.to_bytes(2,'little'))
+        sha256.update(originalSeq.to_bytes(2,'little'))
+        sha256.update(sys.to_bytes(1,'little'))
+        sha256.update(OpenLstCmds.ASCII.to_bytes(1, 'little'))
+        sha256.update(zero.to_bytes(32,'little'))
+        sha256.update(opcode.to_bytes(1,'little'))
+        sha256.update(bytes(data))
+        sha256.update(bytes(KEY))
+        sha256.update(zero.to_bytes(end_zeroes,'little'))
+        hash = sha256.digest()
+
+        msg[:32]=hash
 
         seq = self._send(self.hwid, OpenLstCmds.ASCII, msg)
-
         if resp:
             return self.get_packet_timeout(seqnum=seq)
         else:

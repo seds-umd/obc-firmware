@@ -12,23 +12,23 @@ static uint cs_pin;
 static bool fast = false;
 
 /** \brief Assert CS pin to select flash chip.
- * 
+ *
  * Taken from Pico examples, not sure what FIXME comment is about.
  */
 static inline void cs_select() {
-    asm volatile("nop \n nop \n nop"); // FIXME
+    asm volatile("nop \n nop \n nop");  // FIXME
     gpio_put(cs_pin, 0);
-    asm volatile("nop \n nop \n nop"); // FIXME
+    asm volatile("nop \n nop \n nop");  // FIXME
 }
 
 /** \brief De-assert CS pin to select flash chip.
- * 
+ *
  * Taken from Pico examples, not sure what FIXME comment is about.
  */
 static inline void cs_deselect() {
-    asm volatile("nop \n nop \n nop"); // FIXME
+    asm volatile("nop \n nop \n nop");  // FIXME
     gpio_put(cs_pin, 1);
-    asm volatile("nop \n nop \n nop"); // FIXME
+    asm volatile("nop \n nop \n nop");  // FIXME
 }
 
 /** \brief Helper function to send a single byte SPI command.
@@ -57,7 +57,7 @@ void flash_setup(uint cs) {
     gpio_set_dir(cs_pin, GPIO_OUT);
 
     // Use fast reads if faster than 50 MHz
-    if (actual > 50*1000*1000) {
+    if (actual > 50 * 1000 * 1000) {
         fast = true;
     }
 }
@@ -139,17 +139,11 @@ void flash_erase_64k(uint32_t addr) {
     cs_deselect();
 }
 
-void flash_erase_chip() {
-    single_cmd(FLASH_CMD_CHIP_ERASE);
-}
+void flash_erase_chip() { single_cmd(FLASH_CMD_CHIP_ERASE); }
 
-void flash_power_down() {
-    single_cmd(FLASH_CMD_POWER_DOWN);
-}
+void flash_power_down() { single_cmd(FLASH_CMD_POWER_DOWN); }
 
-void flash_power_up() {
-    single_cmd(FLASH_CMD_POWER_UP);
-}
+void flash_power_up() { single_cmd(FLASH_CMD_POWER_UP); }
 
 int flash_is_busy() {
     uint8_t cmdbuf[2];
@@ -172,9 +166,7 @@ void flash_wait_done() {
     }
 }
 
-void flash_write_enable() {
-    single_cmd(FLASH_CMD_WRITE_EN);
-}
+void flash_write_enable() { single_cmd(FLASH_CMD_WRITE_EN); }
 
 void flash_get_id(uint8_t *mf_id, uint16_t *dev_id) {
     uint8_t cmdbuf[1];
@@ -202,14 +194,10 @@ uint64_t flash_unique_id() {
     spi_read_blocking(DATA_FLASH_SPI, 0, cmdbuf, 8);
     cs_deselect();
 
-    uint64_t id = ((uint64_t) cmdbuf[0] << 56) | 
-                  ((uint64_t) cmdbuf[1] << 48) |
-                  ((uint64_t) cmdbuf[2] << 40) |
-                  ((uint64_t) cmdbuf[3] << 32) |
-                  ((uint64_t) cmdbuf[4] << 24) |
-                  ((uint64_t) cmdbuf[5] << 16) |
-                  ((uint64_t) cmdbuf[6] << 8) |
-                  ((uint64_t) cmdbuf[7] << 0);
+    uint64_t id = ((uint64_t)cmdbuf[0] << 56) | ((uint64_t)cmdbuf[1] << 48) |
+                  ((uint64_t)cmdbuf[2] << 40) | ((uint64_t)cmdbuf[3] << 32) |
+                  ((uint64_t)cmdbuf[4] << 24) | ((uint64_t)cmdbuf[5] << 16) |
+                  ((uint64_t)cmdbuf[6] << 8) | ((uint64_t)cmdbuf[7] << 0);
 
     return id;
 }
