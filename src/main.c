@@ -8,6 +8,7 @@
 #include "scheduler.h"
 #include "telemetry.h"
 #include "updater.h"
+#include "lfs_flash.h"
 
 #include "hardware/gpio.h"
 #include "hardware/watchdog.h"
@@ -32,6 +33,8 @@ int main() {
     openlst_driver_init();
 
     flash_setup(DATA_FLASH_CS);
+    littlefs_mount();
+    
     openlst_init();
 
     scheduler_init();
