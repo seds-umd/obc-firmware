@@ -34,12 +34,15 @@ int main() {
 
     flash_setup(DATA_FLASH_CS);
     littlefs_mount();
+    update_b
     
     openlst_init();
 
     scheduler_init();
 
     log_fmt("Booted. Git hash: %s. Compiled at %s %s", GIT_HASH, __TIME__, __DATE__);
+
+    update_boot_count();
 
     // Check if last reset was due to watchdog
     if (watchdog_caused_reboot()) {

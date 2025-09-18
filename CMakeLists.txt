@@ -71,6 +71,7 @@ add_executable(application
     src/command_handler.c
     src/crc32.c
     src/flash.c
+    src/lfs_flash
     src/logging.c
     src/main.c
     src/openlst.c

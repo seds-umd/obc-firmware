@@ -1,8 +1,8 @@
 #include "telemetry.h"
 #include "logging.h"
+#include "lfs_flash.h"
 #include "amux.h"
 #include "pico/time.h"
-
 
 static struct telem_struct telem;
 
@@ -39,12 +39,30 @@ void telem_update() {
 
     //Boot Count
     //Requires read to filesystem
-    
-
-    
+    telem.boot_count = read_boot_count();
 }
 
 struct telem_struct *telem_get() {
     telem_update();
     return &telem;
 }
+
+void update_boot_count(){
+    uint16_t boot_count = 0;
+    lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+
+    boot_count += 1;
+    lfs_file_rewind(&lfs, &file);
+    lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_close(&lfs, &file);
+}
+
+int read_boot_count(){
+    uint16_t boot_count = 0;
+    lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_close(&lfs, &file);
+    return boot_count;
+}
+    
