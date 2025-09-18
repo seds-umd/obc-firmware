@@ -24,22 +24,25 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/external/littlefs
 )
 
-# Flash both application and bootloader
-install(CODE "execute_process(
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000; program bootloader.elf verify; program application.elf verify reset exit\"
-)")
+# Don't generate UF2 file to avoid picotool bug
+set(PICO_NO_UF2 1)
+
+# Programming commands for openocd
+set(PROG_APP "program" "application.elf" "verify")
+set(PROG_BL "program" "bootloader.elf" "verify")
+set(PROG_HEADER "program" "header.bin" "verify" "0x10008000")
 
 # Flash application
 add_custom_target(install_app
     DEPENDS application
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; program application.elf verify reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 1000\; ${PROG_APP}\; ${PROG_HEADER} reset exit\"
     COMMENT "Installing application"
 )
 
 # Flash bootloader
 add_custom_target(install_bl
     DEPENDS bootloader
-    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 5000\; program bootloader.elf verify reset exit\"
+    COMMAND openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c \"adapter speed 1000\; ${PROG_BL} reset exit\"
     COMMENT "Installing bootloader"
 )
 
@@ -113,6 +116,13 @@ add_custom_target(file_toucher
         COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c)
 
 add_dependencies(application file_toucher)
+
+# Create header binary
+add_custom_command(TARGET application POST_BUILD
+    COMMAND /usr/bin/env python3 ../generate_header.py
+    COMMENT "Generating application header"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 ###### Bootloader ######
 
