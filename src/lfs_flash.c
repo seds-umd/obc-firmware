@@ -32,6 +32,7 @@ void littelfs_mount(){
         lfs_format(&lfs, &cfg);
         lfs_mount(&lfs, &cfg);
     }
+    lfs_mkdir(%lfs, "/telemetry");
 }
 
 int flash_bd_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {

@@ -51,6 +51,8 @@ void telem_update();
 
 struct telem_struct *telem_get();
 
+void telem_log();
+
 void update_boot_count();
 
 int read_boot_count();

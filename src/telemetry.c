@@ -4,6 +4,8 @@
 #include "amux.h"
 #include "pico/time.h"
 
+#include "external/littlefs/lfs.h"
+
 static struct telem_struct telem;
 
 void telem_update() {
@@ -45,6 +47,18 @@ void telem_update() {
 struct telem_struct *telem_get() {
     telem_update();
     return &telem;
+}
+
+void telem_log(){
+    char path[16] = "/telem/boot_xxx";
+    //Convert to char
+    path[14] = telem.boot_count%10+'0';
+    path[13] = (telem.boot_count%100)/10+'0';
+    path[12] = (telem.boot_count%1000)/100+'0';
+    
+    lfs_file_open(&lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT);
+    lfs_file_write(&lfs, &file, telem, sizeof(telem));
+    lfs_file_close(&lfs, &file);
 }
 
 void update_boot_count(){
