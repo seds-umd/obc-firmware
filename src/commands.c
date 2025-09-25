@@ -23,6 +23,7 @@ static int command_flash(packet_t *pkt);
 static int command_telem(packet_t *pkt);
 static int command_openlst_pwr(packet_t *pkt);
 static int command_update_read(packet_t *pkt);
+static int command_status(packet_t *pkt); // new function to check high (IO6)?
 
 void command_setup() {
     command_init();
@@ -255,4 +256,24 @@ static int command_update_read(packet_t *pkt) {
     memcpy(reply->pld.gnd_cmd.msg.update_chunk.data, flash_read + addr, 128);
 
     openlst_tx(reply);
+}
+
+static int command_status(packet_t *pkt){
+    int state = gpio_get(IO6); // 0 = LOW, 1 = HIGH
+
+    openlst_packet_t *reply = openlst_get_tx_buffer();
+
+    reply->hdr.hwid = 0x0000;
+    reply->hdr.seq = pkt->lst_pkt->hdr.seq;
+    reply->hdr.system = 0x01;
+    reply->hdr.command = ASCII;
+
+    reply->len = OPENLST_HEADER_SIZE + 2;
+    reply->pld.gnd_cmd.opcode = 0x82;  
+    reply->pld.gnd_cmd.msg.gpio_state.pin_state = state;
+
+    openlst_tx(reply);
+
+    return 0;
+
 }
