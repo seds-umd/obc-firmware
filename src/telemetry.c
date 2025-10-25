@@ -4,7 +4,7 @@
 #include "amux.h"
 #include "pico/time.h"
 
-#include "external/littlefs/lfs.h"
+#include "littlefs/lfs.h"
 
 static struct telem_struct telem;
 
@@ -56,27 +56,28 @@ void telem_log(){
     path[13] = (telem.boot_count%100)/10+'0';
     path[12] = (telem.boot_count%1000)/100+'0';
     
-    lfs_file_open(&lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT);
-    lfs_file_write(&lfs, &file, telem, sizeof(telem));
-    lfs_file_close(&lfs, &file);
+    //lfs_file_open(&lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT);
+    //lfs_file_write(&lfs, &file, telem, sizeof(telem));
+    //lfs_file_close(&lfs, &file);
 }
+
 
 void update_boot_count(){
     uint16_t boot_count = 0;
-    lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    //lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    //lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
 
     boot_count += 1;
-    lfs_file_rewind(&lfs, &file);
-    lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
-    lfs_file_close(&lfs, &file);
+    //lfs_file_rewind(&lfs, &file);
+    //lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+    //lfs_file_close(&lfs, &file);
 }
 
 int read_boot_count(){
     uint16_t boot_count = 0;
-    lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
-    lfs_file_close(&lfs, &file);
+    //lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    //lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    //lfs_file_close(&lfs, &file);
     return boot_count;
 }
     

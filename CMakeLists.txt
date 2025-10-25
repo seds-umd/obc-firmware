@@ -21,7 +21,7 @@ pico_sdk_init()
 # Internal and external includes
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/external/littlefs
+    ${PROJECT_SOURCE_DIR}/external
 )
 
 # Don't generate UF2 file to avoid picotool bug
@@ -71,7 +71,7 @@ add_executable(application
     src/command_handler.c
     src/crc32.c
     src/flash.c
-    src/lfs_flash
+    src/lfs_flash.c
     src/logging.c
     src/main.c
     src/openlst.c

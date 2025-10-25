@@ -2,19 +2,19 @@
 #include "command_handler.h"
 #include "commands.h"
 #include "flash.h"
+#include "lfs_flash.h"
 #include "logging.h"
 #include "openlst.h"
 #include "openlst_driver.h"
 #include "scheduler.h"
 #include "telemetry.h"
 #include "updater.h"
-#include "lfs_flash.h"
 
 #include "hardware/gpio.h"
 #include "hardware/watchdog.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
-#include "external/littlefs/lfs.h"
+#include "littlefs/lfs.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -63,7 +63,7 @@ int main() {
     scheduler_add_task(telem_update, 1 * 1000 * 1000);
 
     //Log telemetry to filesystem every 10 seconds
-    scheduler_add_task(log_telem(), 10 * 1000 * 1000)
+    scheduler_add_task(telem_log, 10 * 1000 * 1000);
 
     // Set to 1s for now, if this needs to do anything more complicated we can
     // decrease this

@@ -5,7 +5,8 @@
             "includePath": [
                 "${env:PICO_SDK_PATH}/**",
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/external"
             ],
             "defines": [],
             "cStandard": "c11",

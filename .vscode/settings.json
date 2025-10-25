@@ -3,5 +3,9 @@
     "cmake.configureOnOpen": false,
     "C_Cpp.clang_format_fallbackStyle": "Google",
     "C_Cpp.clang_format_style": "file",
-    "C_Cpp.formatting": "clangFormat"
+    "C_Cpp.formatting": "clangFormat",
+    "files.associations": {
+        "lfs.h": "c",
+        "stdio.h": "c"
+    }
 }

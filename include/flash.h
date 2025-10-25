@@ -1,3 +1,5 @@
+#pragma once
+
 #include "pico/stdlib.h"
 
 // #define FLASH_PAGE_SIZE 256
