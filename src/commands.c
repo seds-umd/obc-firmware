@@ -23,6 +23,7 @@ static int command_flash(packet_t *pkt);
 static int command_telem(packet_t *pkt);
 static int command_openlst_pwr(packet_t *pkt);
 static int command_update_read(packet_t *pkt);
+static int command_deploy_antenna(packet_t *pkt);
 
 void command_setup() {
     command_init();
