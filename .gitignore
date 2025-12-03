@@ -1,3 +1,5 @@
 build/
 venv/
 __pycache__/
+.vscode/
+pico_sdk_import.cmake
