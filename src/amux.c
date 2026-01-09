@@ -11,13 +11,14 @@
 #define VOLTAG_BATT 4
 #define VOLTAGE_3v3 5
 
+#include "amux.h"
+#include "logging.h"
 #include "hardware/gpio.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include <stdint.h>
-#include "logging.h"
-#include "amux.h"
+
 #include <math.h>
 
 void amux_init() 
@@ -35,6 +36,8 @@ void amux_init()
     gpio_set_dir(SELECT_1, true);
     gpio_set_dir(SELECT_2, true);
     gpio_set_dir(SELECT_3, true);
+
+    adc_set_temp_sensor_enabled(true);
 }
 
 void set_select(uint8_t select_number){
@@ -84,7 +87,9 @@ void read_temp(int channel)
 
 uint16_t read_and_convert(uint8_t amux_input) {
      
-     const float conversion_factor = 3.3f / (1 << 12);
+    adc_select_input(0);
+
+    const float conversion_factor = 3.3f / (1 << 12);
 
     set_select(amux_input);
     //selecting which pin from amux to read from
@@ -93,8 +98,7 @@ uint16_t read_and_convert(uint8_t amux_input) {
     uint16_t voltage_in_mv = ((float)result * conversion_factor * 1000);
 
     // this block is for when reading from voltage sensors
-    if (amux_input == 4 || amux_input == 8 || amux_input == 5) {  
-        
+    if (amux_input == 4 || amux_input == 8 || amux_input == 5 || (amux_input >= 13 && amux_input <= 15)) {  
         
         return voltage_in_mv;
     }
@@ -108,9 +112,9 @@ uint16_t read_and_convert(uint8_t amux_input) {
     }
 
 
-    // this block is for when reading from temperature senesors
+    // this block is for when reading from temperature sensors
     if (amux_input == 2 || amux_input == 3 ||
-        (amux_input <= 15 && amux_input >= 11)) {
+        (amux_input <= 12 && amux_input >= 11)) {
          
         const float B = 3435;
         const float R0 = 10000;
@@ -125,3 +129,28 @@ uint16_t read_and_convert(uint8_t amux_input) {
 }
 
 
+uint16_t readrp2040Temp(){
+    const float conversion_factor = 3.3f / (1 << 12);
+    
+    adc_select_input(4);
+    
+    uint16_t result = adc_read();
+
+    uint16_t outputVoltage = result*conversion_factor;
+
+    return 27 - ((outputVoltage - 0.706f) / 0.001721f); 
+}
+
+uint16_t getOutputCurrent(uint16_t outputVoltage, uint8_t pinNo) {
+      uint16_t senseRes = 1;
+      if (pinNo == 0) {
+            senseRes = 10;
+      } else if (pinNo == 1) {
+            senseRes = 25;
+      } else if (pinNo == 9) {
+            senseRes = 25;
+      } else if (pinNo == 10) {
+            senseRes = 2;
+      }
+      return outputVoltage / (senseRes);
+ }
