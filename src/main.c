@@ -35,6 +35,7 @@ int main() {
     openlst_init();
 
     scheduler_init();
+    amux_init();
 
     log_fmt("Booted. Git hash: %s. Compiled at %s %s", GIT_HASH, __TIME__, __DATE__);
 
