@@ -61,6 +61,7 @@
 #define ANTENNA_DEPLOY_PIN 16
 #define OPENLST_PWR_PIN 17
 #define DEBUG_PIN 19
+#define DEPLOYMENT_SWITCH 6
 
 ////////// SETTINGS //////////
 

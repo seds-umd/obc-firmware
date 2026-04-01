@@ -23,6 +23,7 @@ static int command_flash(packet_t *pkt);
 static int command_telem(packet_t *pkt);
 static int command_openlst_pwr(packet_t *pkt);
 static int command_update_read(packet_t *pkt);
+static int command_deploy_antenna(packet_t *pkt);
 
 void command_setup() {
     command_init();
@@ -43,12 +44,34 @@ void command_setup() {
 
     // Control commands
     command_register(0x40, command_openlst_pwr);
+    command_register(0x50, command_deploy_antenna);
 
     // Hardware
     command_register(0x80, command_gpio);
 
     // Drivers
     command_register(0xA0, command_flash);
+}
+
+static int command_deploy_antenna(packet_t *pkt) {
+    UNUSED(pkt); 
+
+    gpio_init(ANTENNA_DEPLOY_PIN);
+    gpio_init(DEPLOYMENT_SWITCH);
+    gpio_set_dir(ANTENNA_DEPLOY_PIN, GPIO_OUT);
+    gpio_set_dir(DEPLOYMENT_SWITCH, GPIO_IN);
+    
+    int is_high = gpio_get(DEPLOYMENT_SWITCH);
+
+    if (is_high) {
+        return 1;
+    }
+
+    gpio_put(ANTENNA_DEPLOY_PIN, 1);
+    sleep_ms(2000); 
+    gpio_put(ANTENNA_DEPLOY_PIN, 0);
+
+    return 0;
 }
 
 static int command_ping(packet_t *pkt) {
