@@ -31,12 +31,12 @@ int main() {
     gpio_set_dir(DEBUG_PIN, true);
     gpio_put(DEBUG_PIN, false);
 
-    openlst_driver_init();
+    //openlst_driver_init();
 
     flash_setup(DATA_FLASH_CS);
     littlefs_mount();
-    
-    openlst_init();
+
+    //openlst_init();
 
     scheduler_init();
 
@@ -57,7 +57,7 @@ int main() {
     watchdog_hw->scratch[0] = 0;
 
     // 1024 byte buffer fills up in 88ms at 115200 baud
-    scheduler_add_task(openlst_process, 50 * 1000);
+    //scheduler_add_task(openlst_process, 50 * 1000);
 
     // Update telemetry every second
     scheduler_add_task(telem_update, 1 * 1000 * 1000);
@@ -67,10 +67,10 @@ int main() {
 
     // Set to 1s for now, if this needs to do anything more complicated we can
     // decrease this
-    scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
+    //scheduler_add_task(openlst_driver_process, 1 * 1000 * 1000);
 
     // Updater
-    scheduler_add_task(updater_process, 100 * 1000);
+    //scheduler_add_task(updater_process, 100 * 1000);
 
     command_setup();
 

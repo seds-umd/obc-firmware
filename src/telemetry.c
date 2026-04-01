@@ -16,8 +16,8 @@ struct lfs_file_config telem_file = {
 
 void telem_update() {
     //Set telem age
-    telem.telem_age_ms = to_ms_since_boot(get_absolute_time()) - telem.uptime_ms;
     telem.uptime_ms = to_ms_since_boot(get_absolute_time());
+    telem.telem_age_ms = to_ms_since_boot(get_absolute_time()) - telem.uptime_ms;
 
     // Update analog telemetry
     telem.v_mb_batt_mv = read_and_convert(4);
