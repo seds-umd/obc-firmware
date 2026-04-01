@@ -8,6 +8,7 @@
 #include "scheduler.h"
 #include "telemetry.h"
 #include "updater.h"
+#include "amux.h"
 
 #include "hardware/gpio.h"
 #include "hardware/watchdog.h"
