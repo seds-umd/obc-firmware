@@ -1,4 +1,5 @@
 #include "telemetry.h"
+#include <stdint.h>
 #include "logging.h"
 #include "lfs_flash.h"
 #include "amux.h"
@@ -7,6 +8,11 @@
 #include "littlefs/lfs.h"
 
 static struct telem_struct telem;
+
+uint8_t file_buf[256];
+struct lfs_file_config telem_file = {
+    .buffer = file_buf,
+};
 
 void telem_update() {
     //Set telem age
@@ -37,7 +43,7 @@ void telem_update() {
 
 
     // Update OpenLST telemetry
-    //Requires command and implementation in openlst firmaware 
+    //Requires command and implementation in openlst firmaware
 
     //Boot Count
     //Requires read to filesystem
@@ -51,33 +57,31 @@ struct telem_struct *telem_get() {
 
 void telem_log(){
     char path[16] = "/telem/boot_xxx";
-    //Convert to char
     path[14] = telem.boot_count%10+'0';
     path[13] = (telem.boot_count%100)/10+'0';
     path[12] = (telem.boot_count%1000)/100+'0';
-    
-    //lfs_file_open(&lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT);
-    //lfs_file_write(&lfs, &file, telem, sizeof(telem));
-    //lfs_file_close(&lfs, &file);
+
+    lfs_file_opencfg(&lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT, &telem_file);
+    lfs_file_write(&lfs, &file, &telem, sizeof(telem));
+    lfs_file_close(&lfs, &file);
 }
 
 
 void update_boot_count(){
     uint16_t boot_count = 0;
-    //lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    //lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_opencfg(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT, &telem_file);
+    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
 
     boot_count += 1;
-    //lfs_file_rewind(&lfs, &file);
-    //lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
-    //lfs_file_close(&lfs, &file);
+    lfs_file_rewind(&lfs, &file);
+    lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_close(&lfs, &file);
 }
 
 int read_boot_count(){
     uint16_t boot_count = 0;
-    //lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    //lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
-    //lfs_file_close(&lfs, &file);
+    lfs_file_opencfg(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT, &telem_file);
+    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_close(&lfs, &file);
     return boot_count;
 }
-    
