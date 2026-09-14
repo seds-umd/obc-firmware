@@ -85,3 +85,15 @@
 
 // Written to watchdog scratch 0 to indicate we want to stay in bootloader
 #define BL_MAGIC 0xacb09b3c
+
+////////// FPGA LOADER //////////
+#define FPGA_BITSTREAM_SIZE 1024
+#define FPGA_LOADER_SCK_RATE 1500 //kHz
+#define FPGA_LOADER_SPI spi1
+#define FPGA_LOADER_RX 8
+#define FPGA_LOADER_CS 9
+#define FPGA_LOADER_SCK 10
+#define FPGA_LOADER_TX 11
+#define FPGA_LOADER_PROGRAM_B 18
+#define FPGA_LOADER_INIT_B 19
+#define FPGA_LOADER_DONE 20
